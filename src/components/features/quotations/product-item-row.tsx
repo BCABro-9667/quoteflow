@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { UseFieldArrayReturn, UseFormReturn } from "react-hook-form";
@@ -8,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Trash2, Image as ImageIcon } from "lucide-react";
 import Image from "next/image";
-import type { quotationSchema } from "@/lib/actions"; // Assuming this is where ProductItemSchema is derived
+import type { quotationSchema } from "@/lib/schemas"; // Assuming this is where ProductItemSchema is derived
 
 type QuotationFormValues = z.infer<typeof quotationSchema>;
 

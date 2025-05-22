@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,7 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { CalendarIcon, PlusCircle } from "lucide-react";
 import { format } from "date-fns";
-import { quotationSchema } from "@/lib/actions";
+import { quotationSchema } from "@/lib/schemas";
 import type { Company, Quotation, ProductItem as ProductItemType } from "@/types";
 import { ProductItemRow } from "./product-item-row";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
