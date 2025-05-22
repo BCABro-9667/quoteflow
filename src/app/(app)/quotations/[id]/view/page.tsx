@@ -1,13 +1,13 @@
+
 import { getQuotationById, getCompanyById } from "@/lib/mock-data";
 import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Download, Printer, Edit } from "lucide-react";
-import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
+import type { Quotation } from "@/types"; // Ensure Quotation type is imported
+import { QuotationViewActions } from "@/components/features/quotations/quotation-view-actions";
 
 function getStatusBadgeVariant(status: Quotation['status']): "default" | "secondary" | "destructive" | "outline" {
   switch (status) {
@@ -19,7 +19,6 @@ function getStatusBadgeVariant(status: Quotation['status']): "default" | "second
     default: return 'outline';
   }
 }
-
 
 export default async function ViewQuotationPage({ params }: { params: { id: string } }) {
   const quotation = await getQuotationById(params.id);
@@ -39,26 +38,14 @@ export default async function ViewQuotationPage({ params }: { params: { id: stri
     <div className="container mx-auto py-8 px-4 md:px-0">
       <div className="flex justify-between items-center mb-6 print:hidden">
         <h1 className="text-3xl font-bold text-primary">Quotation #{quotation.quotationNumber}</h1>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => window.print()}>
-            <Printer className="mr-2 h-4 w-4" /> Print
-          </Button>
-           <Button variant="outline" onClick={() => console.log("Downloading PDF...")}>
-            <Download className="mr-2 h-4 w-4" /> Download PDF
-          </Button>
-          <Button asChild>
-            <Link href={`/quotations/${quotation.id}/edit`}>
-              <Edit className="mr-2 h-4 w-4" /> Edit
-            </Link>
-          </Button>
-        </div>
+        <QuotationViewActions quotationId={quotation.id} quotationNumber={quotation.quotationNumber} />
       </div>
 
       <Card className="w-full max-w-4xl mx-auto shadow-2xl print:shadow-none print:border-none">
         <CardHeader className="bg-muted/30 p-6 print:bg-transparent">
           <div className="flex flex-col md:flex-row justify-between items-start">
             <div>
-              <Image src="https://placehold.co/150x50.png?text=QuoteFlow" alt="QuoteFlow Logo" width={150} height={50} className="mb-4" data-ai-hint="logo company" />
+              <Image src="https://placehold.co/150x50.png?text=QuoteFlow" alt="QuoteFlow Logo" width={150} height={50} className="mb-4" data-ai-hint="logo company"/>
               <p className="text-sm text-muted-foreground">Your Company Name</p>
               <p className="text-sm text-muted-foreground">123 Main Street, Anytown, USA</p>
               <p className="text-sm text-muted-foreground">contact@yourcompany.com</p>

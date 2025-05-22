@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
@@ -11,17 +12,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, PlusCircle, Search, Download } from "lucide-react";
+import { FileText, PlusCircle, Search } from "lucide-react"; // Removed Download
 import { getQuotations } from "@/lib/mock-data";
 import { QuotationActions } from "@/components/features/quotations/quotation-actions";
 import type { Quotation } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { QuotationPageActions } from "@/components/features/quotations/quotation-page-actions";
 
 function getStatusBadgeVariant(status: Quotation['status']): "default" | "secondary" | "destructive" | "outline" {
   switch (status) {
     case 'accepted':
-      return 'default'; // Or a success green, if defined
+      return 'default'; 
     case 'sent':
       return 'secondary';
     case 'draft':
@@ -29,7 +31,7 @@ function getStatusBadgeVariant(status: Quotation['status']): "default" | "second
     case 'rejected':
       return 'destructive';
     case 'archived':
-      return 'secondary'; // Or a specific archive color
+      return 'secondary'; 
     default:
       return 'outline';
   }
@@ -112,7 +114,6 @@ export default async function QuotationsPage({
   if (searchParams?.companyId) {
     quotations = quotations.filter(q => q.companyId === searchParams.companyId);
   }
-  // Add filtering by query if needed
 
   return (
     <>
@@ -120,19 +121,7 @@ export default async function QuotationsPage({
         title="Manage Quotations"
         icon={FileText}
         description="Create, view, edit, or delete quotations."
-        actions={
-           <div className="flex gap-2">
-             <Button variant="outline" size="sm" onClick={() => console.log("Exporting quotations...")}>
-                <Download className="mr-2 h-4 w-4" />
-                Export All
-            </Button>
-            <Button asChild>
-              <Link href="/quotations/new">
-                <PlusCircle className="mr-2 h-4 w-4" /> Create New Quotation
-              </Link>
-            </Button>
-          </div>
-        }
+        actions={<QuotationPageActions />}
       />
       <div className="mb-4">
         <div className="relative">
@@ -141,7 +130,6 @@ export default async function QuotationsPage({
             type="search"
             placeholder="Search by number, company, status..."
             className="w-full rounded-md bg-background pl-10 py-2 h-10 border shadow-sm"
-            // Implement search
           />
         </div>
       </div>
