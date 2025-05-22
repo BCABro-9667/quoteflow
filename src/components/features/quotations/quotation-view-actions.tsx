@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Download, Printer, Edit } from "lucide-react";
-// import { useToast } from "@/hooks/use-toast"; // Uncomment if you plan to use toast here
+import { useToast } from "@/hooks/use-toast";
 
 interface QuotationViewActionsProps {
   quotationId: string;
@@ -12,16 +12,15 @@ interface QuotationViewActionsProps {
 }
 
 export function QuotationViewActions({ quotationId, quotationNumber }: QuotationViewActionsProps) {
-  // const { toast } = useToast(); // Uncomment if you plan to use toast here
+  const { toast } = useToast(); 
 
   const handlePrint = () => {
     window.print();
   };
 
   const handleDownload = () => {
-    // Placeholder for actual PDF generation/download logic
-    console.log(`Downloading quotation ${quotationNumber} PDF...`);
-    // toast({ title: "Download Started", description: `Quotation ${quotationNumber} PDF is being prepared.` });
+    toast({ title: "Preparing PDF", description: `Your quotation ${quotationNumber} will be prepared for printing or saving as PDF.` });
+    window.print(); // Triggers print dialog, user can "Save as PDF"
   };
 
   return (

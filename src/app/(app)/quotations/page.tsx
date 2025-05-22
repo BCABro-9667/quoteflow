@@ -1,4 +1,6 @@
 
+"use client";
+
 import Link from "next/link";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
@@ -12,13 +14,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, PlusCircle, Search } from "lucide-react"; // Removed Download
+import { FileText, PlusCircle, Search, Loader2 } from "lucide-react";
 import { getQuotations } from "@/lib/mock-data";
 import { QuotationActions } from "@/components/features/quotations/quotation-actions";
 import type { Quotation } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { QuotationPageActions } from "@/components/features/quotations/quotation-page-actions";
+import { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from "next/navigation"; // For reading initial companyId filter
 
 function getStatusBadgeVariant(status: Quotation['status']): "default" | "secondary" | "destructive" | "outline" {
   switch (status) {
@@ -37,14 +41,14 @@ function getStatusBadgeVariant(status: Quotation['status']): "default" | "second
   }
 }
 
-async function QuotationsTable({ quotations }: { quotations: Quotation[] }) {
+function QuotationsTable({ quotations }: { quotations: Quotation[] }) {
   if (quotations.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <FileText className="w-16 h-16 text-muted-foreground mb-4" />
         <h3 className="text-xl font-semibold mb-2">No Quotations Found</h3>
         <p className="text-muted-foreground mb-4">
-          Start by creating your first quotation for a client.
+          Your search returned no results, or you haven't created any quotations yet.
         </p>
         <Button asChild>
           <Link href="/quotations/new">
@@ -104,36 +108,67 @@ async function QuotationsTable({ quotations }: { quotations: Quotation[] }) {
   );
 }
 
-export default async function QuotationsPage({
-  searchParams,
-}: {
-  searchParams?: { query?: string; companyId?: string };
-}) {
-  let quotations = await getQuotations();
-  
-  if (searchParams?.companyId) {
-    quotations = quotations.filter(q => q.companyId === searchParams.companyId);
-  }
+export default function QuotationsPage() {
+  const searchParams = useSearchParams();
+  const initialCompanyId = searchParams.get('companyId');
 
+  const [allQuotations, setAllQuotations] = useState<Quotation[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      setIsLoading(true);
+      let quotationsData = await getQuotations();
+      if (initialCompanyId) {
+        quotationsData = quotationsData.filter(q => q.companyId === initialCompanyId);
+      }
+      setAllQuotations(quotationsData);
+      setIsLoading(false);
+    }
+    fetchData();
+  }, [initialCompanyId]);
+
+  const filteredQuotations = useMemo(() => {
+    if (!searchQuery) return allQuotations;
+    const lowercasedQuery = searchQuery.toLowerCase();
+    return allQuotations.filter(quotation =>
+      quotation.quotationNumber.toLowerCase().includes(lowercasedQuery) ||
+      (quotation.companyName && quotation.companyName.toLowerCase().includes(lowercasedQuery)) ||
+      quotation.status.toLowerCase().includes(lowercasedQuery)
+    );
+  }, [allQuotations, searchQuery]);
+  
   return (
     <>
       <PageHeader
-        title="Manage Quotations"
+        title={initialCompanyId ? `Quotations for ${allQuotations.find(q => q.companyId === initialCompanyId)?.companyName || 'Selected Company'}` : "Manage Quotations"}
         icon={FileText}
-        description="Create, view, edit, or delete quotations."
+        description={initialCompanyId ? "Viewing quotations filtered by company." : "Create, view, edit, or delete quotations."}
         actions={<QuotationPageActions />}
       />
-      <div className="mb-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search by number, company, status..."
-            className="w-full rounded-md bg-background pl-10 py-2 h-10 border shadow-sm"
-          />
+      {!initialCompanyId && ( // Only show search bar if not filtering by companyId from URL
+        <div className="mb-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search by number, company, status..."
+              className="w-full rounded-md bg-background pl-10 py-2 h-10 border shadow-sm"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
         </div>
-      </div>
-      <QuotationsTable quotations={quotations} />
+      )}
+      {isLoading ? (
+         <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-2 text-muted-foreground">Loading quotations...</span>
+        </div>
+      ) : (
+        <QuotationsTable quotations={filteredQuotations} />
+      )}
     </>
   );
 }
