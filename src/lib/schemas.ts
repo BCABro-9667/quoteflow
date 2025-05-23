@@ -42,4 +42,7 @@ export const myCompanySettingsSchema = z.object({
   email: z.string().email("Invalid email address for your company"),
   phone: z.string().min(10, "Your company phone number must be at least 10 digits"),
   logoUrl: z.string().url("Invalid URL for logo. Please provide a valid image URL.").or(z.literal("")),
+  quotationPrefix: z.string().max(50, "Prefix should be 50 characters or less.").optional().or(z.literal("")), // Allow empty for just numbers
+  quotationNextNumber: z.coerce.number().int().positive("Next number must be a positive integer.").min(1, "Next number must be at least 1."),
 });
+

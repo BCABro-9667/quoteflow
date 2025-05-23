@@ -22,6 +22,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { useActionState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
+import { Separator } from "@/components/ui/separator";
 
 type MyCompanyFormValues = z.infer<typeof myCompanySettingsSchema>;
 
@@ -47,6 +48,8 @@ export function MyCompanyForm({ settings, formAction }: MyCompanyFormProps) {
       email: settings?.email || "",
       phone: settings?.phone || "",
       logoUrl: settings?.logoUrl || "",
+      quotationPrefix: settings?.quotationPrefix || "QTN-",
+      quotationNextNumber: settings?.quotationNextNumber || 1,
     },
   });
 
@@ -55,8 +58,6 @@ export function MyCompanyForm({ settings, formAction }: MyCompanyFormProps) {
   useEffect(() => {
     if (state?.message && !state.errors) {
       toast({ title: "Success", description: state.message });
-      // Optionally reset form if needed, or rely on re-fetched data if page reloads/revalidates
-      // form.reset(form.getValues()); // to keep current form values after successful save
     } else if (state?.message && state.errors) {
       toast({ title: "Error", description: state.message, variant: "destructive" });
     }
@@ -64,7 +65,15 @@ export function MyCompanyForm({ settings, formAction }: MyCompanyFormProps) {
 
   // Reset form if settings prop changes (e.g., after successful save and revalidation)
   useEffect(() => {
-    form.reset(settings);
+    form.reset({
+        name: settings?.name || "",
+        address: settings?.address || "",
+        email: settings?.email || "",
+        phone: settings?.phone || "",
+        logoUrl: settings?.logoUrl || "",
+        quotationPrefix: settings?.quotationPrefix || "QTN-",
+        quotationNextNumber: settings?.quotationNextNumber || 1,
+    });
   }, [settings, form]);
 
   return (
@@ -160,7 +169,6 @@ export function MyCompanyForm({ settings, formAction }: MyCompanyFormProps) {
                     className="object-contain"
                     data-ai-hint="company logo"
                     onError={(e) => {
-                      // Fallback or hide if image fails to load
                       e.currentTarget.style.display = 'none';
                       const errorMsg = form.getFieldState("logoUrl").error?.message;
                       if (!errorMsg) {
@@ -169,7 +177,6 @@ export function MyCompanyForm({ settings, formAction }: MyCompanyFormProps) {
                     }}
                     onLoad={(e) => {
                        e.currentTarget.style.display = 'block';
-                       // Clear error if image loads successfully
                        if (form.getFieldState("logoUrl").error) {
                            form.clearErrors("logoUrl");
                        }
@@ -181,6 +188,44 @@ export function MyCompanyForm({ settings, formAction }: MyCompanyFormProps) {
                 )}
               </div>
             )}
+
+            <Separator className="my-4" />
+            <h3 className="text-lg font-medium">Quotation Numbering</h3>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                control={form.control}
+                name="quotationPrefix"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Quotation Prefix</FormLabel>
+                    <FormControl>
+                        <Input placeholder="QTN-" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                        E.g., &quot;INV-&quot;, &quot;ET/2024-25/&quot;. Leave blank for no prefix.
+                    </FormDescription>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="quotationNextNumber"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Next Quotation Number</FormLabel>
+                    <FormControl>
+                        <Input type="number" placeholder="1" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                        The next number to use (e.g., 1, 101). Will be padded to 3 digits.
+                    </FormDescription>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
+            
             {state?.message && state.errors && Object.keys(state.errors).length === 0 && (
                 <p className="text-sm font-medium text-destructive">{state.message}</p>
              )}
@@ -195,3 +240,4 @@ export function MyCompanyForm({ settings, formAction }: MyCompanyFormProps) {
     </Card>
   );
 }
+

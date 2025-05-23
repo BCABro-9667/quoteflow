@@ -60,4 +60,7 @@ export interface MyCompanySettings {
   email: string;
   phone: string;
   logoUrl: string;
+  quotationPrefix: string;
+  quotationNextNumber: number;
 }
+
