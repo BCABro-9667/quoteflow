@@ -8,38 +8,33 @@ import mongoose from 'mongoose';
 
 // Helper to convert DB doc to client-facing type
 const toCompany = (doc: any): Company => {
-  const obj = doc.toObject ? doc.toObject() : doc;
+  const obj = doc.toObject(); // Applies schema's toObject transform
   return {
-    ...obj,
-    id: obj._id.toString(),
-    createdAt: new Date(obj.createdAt),
-    updatedAt: new Date(obj.updatedAt),
-  };
+    ...obj, // Spreads properties from the transformed object, including 'id'
+    // id: obj.id, // 'id' is already part of 'obj' due to the transform in CompanySchema
+    createdAt: new Date(obj.createdAt), // Ensure Date type
+    updatedAt: new Date(obj.updatedAt), // Ensure Date type
+  } as Company; // Cast to Company type
 };
 
 const toQuotation = (doc: any): Quotation => {
-  const obj = doc.toObject ? doc.toObject() : doc;
+  const obj = doc.toObject(); // Applies schema's toObject transform (for Quotation and its items)
   return {
-    ...obj,
-    id: obj._id.toString(),
-    companyId: obj.companyId.toString(),
-    items: obj.items.map((item: any) => ({
-      ...item,
-      id: item._id ? item._id.toString() : item.id, // Handle if _id exists
-    })),
-    date: new Date(obj.date),
-    validUntil: obj.validUntil ? new Date(obj.validUntil) : undefined,
-    createdAt: new Date(obj.createdAt),
-    updatedAt: new Date(obj.updatedAt),
-  };
+    ...obj, // Spreads properties, including 'id' for quotation and transformed 'items'
+    companyId: obj.companyId.toString(), // Ensure companyId (ObjectId) is converted to string
+    date: new Date(obj.date), // Ensure Date type
+    validUntil: obj.validUntil ? new Date(obj.validUntil) : undefined, // Ensure Date type or undefined
+    createdAt: new Date(obj.createdAt), // Ensure Date type
+    updatedAt: new Date(obj.updatedAt), // Ensure Date type
+  } as Quotation; // Cast to Quotation type
 };
 
 const toMyCompanySettings = (doc: any): MyCompanySettings => {
-   const obj = doc.toObject ? doc.toObject() : doc;
+   const obj = doc.toObject(); // Applies schema's toObject transform
   return {
-    ...obj,
-    id: obj._id.toString(),
-  };
+    ...obj, // Spreads properties from the transformed object, including 'id'
+    // id: obj.id, // 'id' is already part of 'obj' due to the transform
+  } as MyCompanySettings; // Cast to MyCompanySettings type
 };
 
 
@@ -83,60 +78,44 @@ export async function deleteCompany(id: string): Promise<boolean> {
 
 export async function getQuotations(): Promise<Quotation[]> {
   await connectDB();
-  const quotations = await QuotationModel.find({})
+  const quotationsDocs = await QuotationModel.find({})
     .populate<{ companyId: { _id: mongoose.Types.ObjectId, name: string, contactEmail: string } }>({
       path: 'companyId',
-      select: 'name contactEmail'
+      select: 'name contactEmail' // Select fields for population
     })
     .sort({ date: -1 });
 
-  return quotations.map(q => {
-    const populatedQuotation = q.toObject({ virtuals: true }) as any; // Use 'any' for simplicity here
-    return {
-      ...populatedQuotation,
-      id: populatedQuotation._id.toString(),
-      companyId: populatedQuotation.companyId._id.toString(),
-      companyName: populatedQuotation.companyId.name,
-      companyEmail: populatedQuotation.companyId.contactEmail,
-      items: populatedQuotation.items.map((item: any) => ({
-        ...item,
-        id: item._id ? item._id.toString() : item.id,
-      })),
-      date: new Date(populatedQuotation.date),
-      validUntil: populatedQuotation.validUntil ? new Date(populatedQuotation.validUntil) : undefined,
-      createdAt: new Date(populatedQuotation.createdAt),
-      updatedAt: new Date(populatedQuotation.updatedAt),
-    };
+  return quotationsDocs.map(doc => {
+    const quotation = toQuotation(doc);
+    // The virtuals 'companyName' and 'companyEmail' in QuotationSchema should handle populating these.
+    // If direct population results need to be mapped:
+    if (doc.companyId && typeof doc.companyId === 'object' && 'name' in doc.companyId) {
+        quotation.companyName = (doc.companyId as any).name;
+        quotation.companyEmail = (doc.companyId as any).contactEmail;
+    }
+    return quotation;
   });
 }
 
 export async function getQuotationById(id: string): Promise<Quotation | null> {
   await connectDB();
   if (!mongoose.Types.ObjectId.isValid(id)) return null;
-  const quotation = await QuotationModel.findById(id)
+  const quotationDoc = await QuotationModel.findById(id)
     .populate<{ companyId: { _id: mongoose.Types.ObjectId, name: string, contactEmail: string } }>({
       path: 'companyId',
-      select: 'name contactEmail'
+      select: 'name contactEmail' // Select fields for population
     });
 
-  if (!quotation) return null;
+  if (!quotationDoc) return null;
   
-  const populatedQuotation = quotation.toObject({ virtuals: true }) as any;
-  return {
-      ...populatedQuotation,
-      id: populatedQuotation._id.toString(),
-      companyId: populatedQuotation.companyId._id.toString(),
-      companyName: populatedQuotation.companyId.name,
-      companyEmail: populatedQuotation.companyId.contactEmail,
-      items: populatedQuotation.items.map((item: any) => ({
-        ...item,
-        id: item._id ? item._id.toString() : item.id,
-      })),
-      date: new Date(populatedQuotation.date),
-      validUntil: populatedQuotation.validUntil ? new Date(populatedQuotation.validUntil) : undefined,
-      createdAt: new Date(populatedQuotation.createdAt),
-      updatedAt: new Date(populatedQuotation.updatedAt),
-  };
+  const quotation = toQuotation(quotationDoc);
+  // The virtuals 'companyName' and 'companyEmail' in QuotationSchema should handle populating these.
+  // If direct population results need to be mapped:
+    if (quotationDoc.companyId && typeof quotationDoc.companyId === 'object' && 'name' in quotationDoc.companyId) {
+        quotation.companyName = (quotationDoc.companyId as any).name;
+        quotation.companyEmail = (quotationDoc.companyId as any).contactEmail;
+    }
+  return quotation;
 }
 
 export async function addQuotation(
@@ -150,18 +129,16 @@ export async function addQuotation(
   const settings = await getMyCompanySettings();
   let finalQuotationNumber = quotationData.quotationNumber;
 
-  if (!finalQuotationNumber || finalQuotationNumber === `${settings.quotationPrefix}${String(settings.quotationNextNumber).padStart(3, '0')}`) {
-      finalQuotationNumber = `${settings.quotationPrefix}${String(settings.quotationNextNumber).padStart(3, '0')}`;
-      // Increment next number in settings
+  // Check if this quotation number is the one that would auto-increment the settings
+  if (quotationData.quotationNumber === `${settings.quotationPrefix}${String(settings.quotationNextNumber).padStart(3, '0')}`) {
+      // Increment next number in settings ONLY if the submitted number matches the expected next number
       await MyCompanySettingsModel.findOneAndUpdate({}, { $inc: { quotationNextNumber: 1 } }, { new: true, upsert: true });
   }
   
-  // Ensure product item IDs are ObjectIds or handle client-generated string IDs
   const itemsWithMongoIds = quotationData.items.map(item => ({
     ...item,
-    _id: item.id && mongoose.Types.ObjectId.isValid(item.id) ? new mongoose.Types.ObjectId(item.id) : new mongoose.Types.ObjectId() // Generate new if invalid/missing
+    _id: item.id && mongoose.Types.ObjectId.isValid(item.id) ? new mongoose.Types.ObjectId(item.id) : new mongoose.Types.ObjectId()
   }));
-
 
   const newQuotationData = {
     ...quotationData,
@@ -170,34 +147,13 @@ export async function addQuotation(
     items: itemsWithMongoIds,
   };
 
-  const newQuotation = new QuotationModel(newQuotationData);
-  await newQuotation.save();
+  const newQuotationDoc = new QuotationModel(newQuotationData);
+  await newQuotationDoc.save();
   
-  // Repopulate for return
-  const savedQuotation = await QuotationModel.findById(newQuotation._id)
-    .populate<{ companyId: { _id: mongoose.Types.ObjectId, name: string, contactEmail: string } }>({
-      path: 'companyId',
-      select: 'name contactEmail'
-    });
-  
-  if (!savedQuotation) throw new Error("Failed to retrieve saved quotation");
-  
-  const populatedQuotation = savedQuotation.toObject({ virtuals: true }) as any;
-  return {
-      ...populatedQuotation,
-      id: populatedQuotation._id.toString(),
-      companyId: populatedQuotation.companyId._id.toString(),
-      companyName: populatedQuotation.companyId.name,
-      companyEmail: populatedQuotation.companyId.contactEmail,
-      items: populatedQuotation.items.map((item: any) => ({
-        ...item,
-        id: item._id.toString(),
-      })),
-      date: new Date(populatedQuotation.date),
-      validUntil: populatedQuotation.validUntil ? new Date(populatedQuotation.validUntil) : undefined,
-      createdAt: new Date(populatedQuotation.createdAt),
-      updatedAt: new Date(populatedQuotation.updatedAt),
-  };
+  // Re-fetch to ensure population and transforms are applied consistently
+  const savedQuotation = await getQuotationById(newQuotationDoc._id.toString());
+  if (!savedQuotation) throw new Error("Failed to retrieve saved quotation after creation.");
+  return savedQuotation;
 }
 
 export async function updateQuotation(
@@ -214,35 +170,15 @@ export async function updateQuotation(
   if (updates.items) {
     updateData.items = updates.items.map(item => ({
       ...item,
-       // Ensure _id is ObjectId or generate new if it's a new subdocument
       _id: item.id && mongoose.Types.ObjectId.isValid(item.id) ? new mongoose.Types.ObjectId(item.id) : (item._id || new mongoose.Types.ObjectId())
     }));
   }
   
-  const updatedQuotation = await QuotationModel.findByIdAndUpdate(id, updateData, { new: true })
-    .populate<{ companyId: { _id: mongoose.Types.ObjectId, name: string, contactEmail: string } }>({
-      path: 'companyId',
-      select: 'name contactEmail'
-    });
-
-  if (!updatedQuotation) return null;
+  await QuotationModel.findByIdAndUpdate(id, updateData, { new: true });
   
-  const populatedQuotation = updatedQuotation.toObject({ virtuals: true }) as any;
-   return {
-      ...populatedQuotation,
-      id: populatedQuotation._id.toString(),
-      companyId: populatedQuotation.companyId._id.toString(),
-      companyName: populatedQuotation.companyId.name,
-      companyEmail: populatedQuotation.companyId.contactEmail,
-      items: populatedQuotation.items.map((item: any) => ({
-        ...item,
-        id: item._id.toString(),
-      })),
-      date: new Date(populatedQuotation.date),
-      validUntil: populatedQuotation.validUntil ? new Date(populatedQuotation.validUntil) : undefined,
-      createdAt: new Date(populatedQuotation.createdAt),
-      updatedAt: new Date(populatedQuotation.updatedAt),
-  };
+  // Re-fetch to ensure population and transforms are applied consistently
+  const updatedQuotation = await getQuotationById(id);
+  return updatedQuotation;
 }
 
 export async function deleteQuotation(id: string): Promise<boolean> {
@@ -252,10 +188,6 @@ export async function deleteQuotation(id: string): Promise<boolean> {
   return !!result;
 }
 
-
-// MyCompanySettings is a singleton. We use findOneAndUpdate with upsert.
-// A known ID or a specific query field could be used if there were multiple setting profiles.
-// For this app, we assume one global settings document.
 const defaultMyCompanySettings: Omit<MyCompanySettings, 'id'> = {
   name: "QuoteFlow Solutions",
   address: "456 App Business Park, Suite 100, Tech City, TX 75001",
@@ -269,19 +201,19 @@ const defaultMyCompanySettings: Omit<MyCompanySettings, 'id'> = {
 
 export async function getMyCompanySettings(): Promise<MyCompanySettings> {
   await connectDB();
-  let settings = await MyCompanySettingsModel.findOne({});
-  if (!settings) {
-    settings = await MyCompanySettingsModel.create(defaultMyCompanySettings);
+  let settingsDoc = await MyCompanySettingsModel.findOne({});
+  if (!settingsDoc) {
+    settingsDoc = await MyCompanySettingsModel.create(defaultMyCompanySettings);
   }
-  return toMyCompanySettings(settings);
+  return toMyCompanySettings(settingsDoc);
 }
 
 export async function updateMyCompanySettings(updates: Partial<Omit<MyCompanySettings, 'id'>>): Promise<MyCompanySettings> {
   await connectDB();
-  const updatedSettings = await MyCompanySettingsModel.findOneAndUpdate({}, updates, { new: true, upsert: true });
-  if (!updatedSettings) { // Should not happen with upsert: true if DB is connected
+  const updatedSettingsDoc = await MyCompanySettingsModel.findOneAndUpdate({}, updates, { new: true, upsert: true });
+  if (!updatedSettingsDoc) {
       throw new Error("Failed to update or create company settings");
   }
-  return toMyCompanySettings(updatedSettings);
+  return toMyCompanySettings(updatedSettingsDoc);
 }
-
+    
