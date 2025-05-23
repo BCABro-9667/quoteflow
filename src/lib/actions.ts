@@ -67,7 +67,7 @@ export async function deleteCompanyAction(id: string) {
 // Quotation Actions
 export async function createQuotationAction(prevState: any, formData: FormData) {
   const rawData = Object.fromEntries(formData.entries());
-  const items: Omit<ProductItem, 'id'>[] = []; // For create, ID is not needed from client
+  const items: Omit<ProductItem, 'id'>[] = []; 
   for (let i = 0; ; i++) {
     const itemNameKey = `items.${i}.name`;
     if (!Object.prototype.hasOwnProperty.call(rawData, itemNameKey)) break;
@@ -76,7 +76,6 @@ export async function createQuotationAction(prevState: any, formData: FormData) 
       hsn: rawData[`items.${i}.hsn`]?.toString() || '',
       name: rawData[itemNameKey]?.toString() || '',
       description: rawData[`items.${i}.description`]?.toString() || '',
-      // imageUrl removed from item form, so not expecting it here for new items
       quantity: parseFloat(rawData[`items.${i}.quantity`]?.toString() || '0'),
       unitType: rawData[`items.${i}.unitType`]?.toString() || '',
       unitPrice: parseFloat(rawData[`items.${i}.unitPrice`]?.toString() || '0'),
@@ -90,6 +89,7 @@ export async function createQuotationAction(prevState: any, formData: FormData) 
     items: items,
     status: (rawData.status as Quotation['status']) || "draft",
     notes: rawData.notes as string || undefined,
+    createdBy: rawData.createdBy as string,
   };
   
   const validatedFields = quotationSchema.safeParse(dataToValidate);
@@ -103,7 +103,6 @@ export async function createQuotationAction(prevState: any, formData: FormData) 
   }
   
   try {
-    // Pass all validated data; mockApi.addQuotation will handle the rest
     await mockApi.addQuotation(validatedFields.data);
   } catch (e) {
     const errorMessage = e instanceof Error ? e.message : "Failed to create quotation.";
@@ -128,7 +127,6 @@ export async function updateQuotationAction(id: string, prevState: any, formData
       hsn: rawData[`items.${i}.hsn`]?.toString() || '',
       name: rawData[itemNameKey]?.toString() || '',
       description: rawData[`items.${i}.description`]?.toString() || '',
-      // imageUrl removed from item form
       quantity: parseFloat(rawData[`items.${i}.quantity`]?.toString() || '0'),
       unitType: rawData[`items.${i}.unitType`]?.toString() || '',
       unitPrice: parseFloat(rawData[`items.${i}.unitPrice`]?.toString() || '0'),
@@ -142,6 +140,7 @@ export async function updateQuotationAction(id: string, prevState: any, formData
     items: items,
     status: rawData.status as Quotation['status'],
     notes: rawData.notes as string || undefined,
+    createdBy: rawData.createdBy as string,
   };
   
   const validatedFields = quotationSchema.safeParse(dataToValidate);
@@ -155,7 +154,6 @@ export async function updateQuotationAction(id: string, prevState: any, formData
   }
 
   try {
-    // Pass all validated data; mockApi.updateQuotation will handle the rest
     await mockApi.updateQuotation(id, validatedFields.data);
   } catch (e) {
     const errorMessage = e instanceof Error ? e.message : "Failed to update quotation.";
@@ -221,4 +219,3 @@ export async function updateMyCompanySettingsAction(prevState: any, formData: Fo
   revalidatePath("/quotations", "layout"); 
   return { message: "Company settings updated successfully." };
 }
-

@@ -30,8 +30,6 @@ export default async function ViewQuotationPage({ params }: { params: { id: stri
 
   const clientCompany = await getCompanyById(quotation.companyId);
 
-  // Totals section removed as per request
-
   return (
     <div className="container mx-auto py-8 px-4 md:px-0">
       <div className="flex justify-between items-center mb-6 print:hidden">
@@ -112,8 +110,6 @@ export default async function ViewQuotationPage({ params }: { params: { id: stri
             </table>
           </div>
           
-          {/* Removed Subtotal, Tax, Grand Total section */}
-
           {quotation.notes && (
             <>
               <Separator className="my-6" />
@@ -124,10 +120,18 @@ export default async function ViewQuotationPage({ params }: { params: { id: stri
             </>
           )}
         </CardContent>
-        <CardFooter className="p-6 bg-muted/30 print:bg-transparent">
-          <p className="text-xs text-muted-foreground text-center w-full">
-            Thank you for your business! If you have any questions, please contact us at {myCompany.email}.
-          </p>
+        <CardFooter className="p-6 bg-muted/30 print:bg-transparent flex flex-col items-start text-left">
+          <p className="text-sm text-muted-foreground">Thank You.</p>
+          <p className="text-sm text-muted-foreground mb-2">Regards</p>
+          
+          <p className="text-sm font-semibold text-primary mt-4">For {myCompany.name}</p>
+          
+          <div className="mt-8 h-16"> {/* Placeholder for actual signature or space */}
+             {/* You might want to add an image of a signature here if available */}
+          </div>
+
+          <p className="text-sm mt-1">{quotation.createdBy}</p>
+          <p className="text-xs text-muted-foreground">Authorized signature</p>
         </CardFooter>
       </Card>
     </div>

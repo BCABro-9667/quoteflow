@@ -57,6 +57,7 @@ export let mockQuotations: Quotation[] = [
     items: [mockProductItems[0], mockProductItems[3]],
     status: "sent",
     notes: "Includes 2 year extended warranty. Payment terms: Net 30.",
+    createdBy: "Alice Wonderland",
     createdAt: new Date("2023-06-01T10:00:00Z"),
     updatedAt: new Date("2023-06-02T11:00:00Z"),
   },
@@ -71,6 +72,7 @@ export let mockQuotations: Quotation[] = [
     items: [mockProductItems[1], mockProductItems[4]],
     status: "draft",
     notes: "Requires 50% advance payment. Delivery within 2 weeks.",
+    createdBy: "Bob The Builder",
     createdAt: new Date("2023-06-15T14:00:00Z"),
     updatedAt: new Date("2023-06-15T14:00:00Z"),
   },
@@ -85,6 +87,7 @@ export let mockQuotations: Quotation[] = [
     items: [mockProductItems[2]],
     status: "accepted",
     notes: "Special discount applied.",
+    createdBy: "System Admin",
     createdAt: new Date("2023-07-01T09:30:00Z"),
     updatedAt: new Date("2023-07-05T10:00:00Z"),
   },
@@ -218,7 +221,8 @@ export const getQuotationById = async (id: string): Promise<Quotation | undefine
       ...populated,
       date: populated.date.toISOString(),
       validUntil: populated.validUntil ? populated.validUntil.toISOString() : undefined,
-      notes: populated.notes, // ensure notes are included
+      notes: populated.notes, 
+      createdBy: populated.createdBy,
       createdAt: populated.createdAt.toISOString(),
       updatedAt: populated.updatedAt.toISOString(),
     }));
@@ -226,25 +230,24 @@ export const getQuotationById = async (id: string): Promise<Quotation | undefine
   return undefined;
 };
 
-// quotationData type here includes quotationNumber and notes
 export const addQuotation = async (
   quotationData: Omit<Quotation, "id" | "createdAt" | "updatedAt" | "companyName" | "companyEmail">
 ): Promise<Quotation> => {
   await new Promise(resolve => setTimeout(resolve, 300));
   
   let newQuotation: Quotation = {
-    ...quotationData, // Contains quotationNumber, companyId, date, items, status, notes
+    ...quotationData, 
     id: `quot_${Date.now()}`,
     createdAt: new Date(),
     updatedAt: new Date(),
-    // validUntil is optional and might not be in quotationData
   };
-  newQuotation = populateCompanyDetails(newQuotation); // Populates companyName and companyEmail
+  newQuotation = populateCompanyDetails(newQuotation); 
   quotationsStore.push(newQuotation);
 
-  // Increment the next quotation number in settings
   const settings = await getMyCompanySettings();
-  await updateMyCompanySettings({ quotationNextNumber: settings.quotationNextNumber + 1 });
+  if (newQuotation.quotationNumber === `${settings.quotationPrefix}${String(settings.quotationNextNumber).padStart(3, '0')}`) {
+    await updateMyCompanySettings({ quotationNextNumber: settings.quotationNextNumber + 1 });
+  }
   
   return JSON.parse(JSON.stringify({
     ...newQuotation,
@@ -265,7 +268,7 @@ export const updateQuotation = async (
   
   let updatedQuotationData: Quotation = { 
     ...quotationsStore[quotationIndex], 
-    ...updates, // This can include quotationNumber, notes, etc.
+    ...updates, 
     updatedAt: new Date(),
   };
   
@@ -289,4 +292,3 @@ export const deleteQuotation = async (id: string): Promise<boolean> => {
   quotationsStore = quotationsStore.filter(q => q.id !== id);
   return quotationsStore.length < initialLength;
 };
-

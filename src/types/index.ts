@@ -16,7 +16,7 @@ export interface ProductItem {
   hsn: string;
   name: string;
   description?: string;
-  imageUrl?: string; // Optional, and might be used for display if sourced elsewhere
+  imageUrl?: string; 
   quantity: number;
   unitType?: string; // e.g., "SET", "PCS", "KG"
   unitPrice: number;
@@ -25,16 +25,16 @@ export interface ProductItem {
 
 export interface Quotation {
   id: string;
-  quotationNumber: string; // Should be auto-generated or follow a pattern
-  companyId: string; // Foreign key to Company
-  companyName?: string; // Denormalized for display, populated on fetch
-  companyEmail?: string; // Denormalized for display
+  quotationNumber: string; 
+  companyId: string; 
+  companyName?: string; 
+  companyEmail?: string; 
   date: Date;
-  validUntil?: Date; // Optional, removed from create form
+  validUntil?: Date; 
   items: ProductItem[];
-  // subTotal, taxAmount, grandTotal will be calculated
-  notes?: string; // Optional, removed from create form
+  notes?: string; 
   status: 'draft' | 'sent' | 'accepted' | 'rejected' | 'archived';
+  createdBy: string; // Added field for the person who created the quotation
   createdAt: Date;
   updatedAt: Date;
 }
@@ -55,7 +55,7 @@ export type NavItemGroup = {
 };
 
 export interface MyCompanySettings {
-  id: string; // Should be a singleton, e.g., "my-company-settings"
+  id: string; 
   name: string;
   address: string;
   email: string;

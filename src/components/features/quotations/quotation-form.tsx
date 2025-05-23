@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -36,7 +37,7 @@ interface QuotationFormProps {
   companies: Company[];
   formAction: (prevState: any, formData: FormData) => Promise<any>;
   buttonText?: string;
-  defaultQuotationNumber?: string; // For new quotations
+  defaultQuotationNumber?: string; 
 }
 
 const initialState = {
@@ -71,6 +72,7 @@ export function QuotationForm({
       })) || [{ id: crypto.randomUUID(), hsn: "", name: "", quantity: 1, unitPrice: 0, description: "", unitType: undefined }],
       status: quotation?.status || "draft",
       notes: quotation?.notes || "",
+      createdBy: quotation?.createdBy || "QuoteFlow User", // Default creator name
     },
   });
 
@@ -107,6 +109,7 @@ export function QuotationForm({
     }
     formData.append('status', data.status);
     formData.append('notes', data.notes || '');
+    formData.append('createdBy', data.createdBy);
 
     data.items.forEach((item, index) => {
         formData.append(`items.${index}.id`, item.id || crypto.randomUUID());
@@ -140,6 +143,7 @@ export function QuotationForm({
                     <FormControl>
                       <Input placeholder="e.g., QTN-001" {...field} />
                     </FormControl>
+                    <FormDescription>Auto-generated or editable.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -244,6 +248,21 @@ export function QuotationForm({
                 </FormItem>
               )}
             />
+            
+            <FormField
+              control={form.control}
+              name="createdBy"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Created By</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Your Name" {...field} />
+                  </FormControl>
+                  <FormDescription>Name of the person preparing this quotation.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {state?.message && state.errors && Object.keys(state.errors).length === 0 && (
                 <p className="text-sm font-medium text-destructive">{state.message}</p>
@@ -262,4 +281,3 @@ export function QuotationForm({
     </Card>
   );
 }
-

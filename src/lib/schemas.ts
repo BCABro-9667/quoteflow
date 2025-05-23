@@ -34,6 +34,7 @@ export const quotationSchema = z.object({
   items: z.array(productItemSchema).min(1, "At least one product item is required"),
   status: z.enum(["draft", "sent", "accepted", "rejected", "archived"]),
   notes: z.string().optional(),
+  createdBy: z.string().min(2, "Creator name is required"),
 });
 
 // My Company Settings Schema
@@ -46,4 +47,3 @@ export const myCompanySettingsSchema = z.object({
   quotationPrefix: z.string().max(50, "Prefix should be 50 characters or less.").optional().or(z.literal("")),
   quotationNextNumber: z.coerce.number().int().positive("Next number must be a positive integer.").min(1, "Next number must be at least 1."),
 });
-
