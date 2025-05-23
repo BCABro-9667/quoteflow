@@ -30,10 +30,7 @@ export default async function ViewQuotationPage({ params }: { params: { id: stri
 
   const clientCompany = await getCompanyById(quotation.companyId);
 
-  const subTotal = quotation.items.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
-  const taxRate = 0.18; // Example tax rate, consider making this configurable
-  const taxAmount = subTotal * taxRate;
-  const grandTotal = subTotal + taxAmount;
+  // Totals section removed as per request
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-0">
@@ -114,24 +111,9 @@ export default async function ViewQuotationPage({ params }: { params: { id: stri
               </tbody>
             </table>
           </div>
-          <Separator className="my-6" />
-          <div className="flex justify-end">
-            <div className="w-full max-w-xs space-y-2">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Subtotal:</span>
-                <span>${subTotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Tax ({taxRate * 100}%):</span>
-                <span>${taxAmount.toFixed(2)}</span>
-              </div>
-              <Separator />
-              <div className="flex justify-between font-bold text-lg">
-                <span className="text-primary">Grand Total:</span>
-                <span className="text-primary">${grandTotal.toFixed(2)}</span>
-              </div>
-            </div>
-          </div>
+          
+          {/* Removed Subtotal, Tax, Grand Total section */}
+
           {quotation.notes && (
             <>
               <Separator className="my-6" />
@@ -151,4 +133,3 @@ export default async function ViewQuotationPage({ params }: { params: { id: stri
     </div>
   );
 }
-
