@@ -38,14 +38,14 @@ export const mockCompanies: Company[] = [
 ];
 
 const mockProductItems: ProductItem[] = [
-  { id: "prod_1", hsn: "8471", name: "Laptop Pro 15\"", description: "High-performance laptop", quantity: 2, unitPrice: 1200.00 },
-  { id: "prod_2", hsn: "8517", name: "Smartphone X", description: "Latest generation smartphone", quantity: 5, unitPrice: 800.00 },
-  { id: "prod_3", hsn: "9006", name: "Digital Camera Z", description: "Professional DSLR camera", quantity: 1, unitPrice: 1500.00 },
-  { id: "prod_4", hsn: "8473", name: "Wireless Mouse", quantity: 10, unitPrice: 25.00 },
-  { id: "prod_5", hsn: "8518", name: "Bluetooth Headphones", quantity: 3, unitPrice: 150.00 },
+  { id: "prod_1", hsn: "8471", name: "Laptop Pro 15\"", description: "High-performance laptop", quantity: 2, unitType: "PCS", unitPrice: 1200.00 },
+  { id: "prod_2", hsn: "8517", name: "Smartphone X", description: "Latest generation smartphone", quantity: 5, unitType: "PCS", unitPrice: 800.00 },
+  { id: "prod_3", hsn: "9006", name: "Digital Camera Z", description: "Professional DSLR camera", quantity: 1, unitType: "PCS", unitPrice: 1500.00 },
+  { id: "prod_4", hsn: "8473", name: "Wireless Mouse", quantity: 10, unitType: "PCS", unitPrice: 25.00 },
+  { id: "prod_5", hsn: "8518", name: "Bluetooth Headphones", quantity: 3, unitType: "SET", unitPrice: 150.00 },
 ];
 
-export const mockQuotations: Quotation[] = [
+export let mockQuotations: Quotation[] = [ // Made this let so it can be reassigned
   {
     id: "quot_1",
     quotationNumber: "QTN-2023-001",
@@ -110,7 +110,7 @@ const populateCompanyDetails = (quotation: Quotation): Quotation => {
   return {
     ...quotation,
     companyName: company?.name,
-    companyEmail: company?.contactEmail,
+    companyEmail: company?.contactEmail, // Ensure this is populated
   };
 };
 
@@ -128,12 +128,24 @@ export const updateMyCompanySettings = async (updates: Partial<Omit<MyCompanySet
 
 export const getCompanies = async (): Promise<Company[]> => {
   await new Promise(resolve => setTimeout(resolve, 200)); // Simulate network delay
-  return JSON.parse(JSON.stringify(companiesStore)); // Deep copy
+  return JSON.parse(JSON.stringify(companiesStore.map(c => ({
+    ...c,
+    createdAt: c.createdAt.toISOString(),
+    updatedAt: c.updatedAt.toISOString(),
+  }))));
 };
 
 export const getCompanyById = async (id: string): Promise<Company | undefined> => {
   await new Promise(resolve => setTimeout(resolve, 100));
-  return JSON.parse(JSON.stringify(companiesStore.find(c => c.id === id)));
+  const company = companiesStore.find(c => c.id === id);
+  if (company) {
+    return JSON.parse(JSON.stringify({
+      ...company,
+      createdAt: company.createdAt.toISOString(),
+      updatedAt: company.updatedAt.toISOString(),
+    }));
+  }
+  return undefined;
 };
 
 export const addCompany = async (companyData: Omit<Company, "id" | "createdAt" | "updatedAt">): Promise<Company> => {
@@ -145,7 +157,11 @@ export const addCompany = async (companyData: Omit<Company, "id" | "createdAt" |
     updatedAt: new Date(),
   };
   companiesStore.push(newCompany);
-  return JSON.parse(JSON.stringify(newCompany));
+  return JSON.parse(JSON.stringify({
+    ...newCompany,
+    createdAt: newCompany.createdAt.toISOString(),
+    updatedAt: newCompany.updatedAt.toISOString(),
+  }));
 };
 
 export const updateCompany = async (id: string, updates: Partial<Omit<Company, "id" | "createdAt">>): Promise<Company | null> => {
@@ -153,7 +169,7 @@ export const updateCompany = async (id: string, updates: Partial<Omit<Company, "
   const companyIndex = companiesStore.findIndex(c => c.id === id);
   if (companyIndex === -1) return null;
   companiesStore[companyIndex] = { ...companiesStore[companyIndex], ...updates, updatedAt: new Date() };
-  // Update company name and email in existing quotations if company details changed
+  
   quotationsStore = quotationsStore.map(q => {
     if (q.companyId === id) {
       const company = companiesStore[companyIndex];
@@ -161,14 +177,18 @@ export const updateCompany = async (id: string, updates: Partial<Omit<Company, "
     }
     return q;
   });
-  return JSON.parse(JSON.stringify(companiesStore[companyIndex]));
+  
+  return JSON.parse(JSON.stringify({
+    ...companiesStore[companyIndex],
+    createdAt: companiesStore[companyIndex].createdAt.toISOString(),
+    updatedAt: companiesStore[companyIndex].updatedAt.toISOString(),
+  }));
 };
 
 export const deleteCompany = async (id: string): Promise<boolean> => {
   await new Promise(resolve => setTimeout(resolve, 300));
   const initialLength = companiesStore.length;
   companiesStore = companiesStore.filter(c => c.id !== id);
-  // Also delete associated quotations
   quotationsStore = quotationsStore.filter(q => q.companyId !== id);
   return companiesStore.length < initialLength;
 };
@@ -176,22 +196,39 @@ export const deleteCompany = async (id: string): Promise<boolean> => {
 
 export const getQuotations = async (): Promise<Quotation[]> => {
   await new Promise(resolve => setTimeout(resolve, 200));
-  return JSON.parse(JSON.stringify(quotationsStore.map(q => populateCompanyDetails(q))));
+  return JSON.parse(JSON.stringify(quotationsStore.map(q => {
+    const populated = populateCompanyDetails(q);
+    return {
+      ...populated,
+      date: populated.date.toISOString(),
+      validUntil: populated.validUntil ? populated.validUntil.toISOString() : undefined,
+      createdAt: populated.createdAt.toISOString(),
+      updatedAt: populated.updatedAt.toISOString(),
+    };
+  })));
 };
 
 export const getQuotationById = async (id: string): Promise<Quotation | undefined> => {
   await new Promise(resolve => setTimeout(resolve, 100));
   const quotation = quotationsStore.find(q => q.id === id);
   if (quotation) {
-    return JSON.parse(JSON.stringify(populateCompanyDetails(quotation)));
+    const populated = populateCompanyDetails(quotation);
+    return JSON.parse(JSON.stringify({
+      ...populated,
+      date: populated.date.toISOString(),
+      validUntil: populated.validUntil ? populated.validUntil.toISOString() : undefined,
+      createdAt: populated.createdAt.toISOString(),
+      updatedAt: populated.updatedAt.toISOString(),
+    }));
   }
   return undefined;
 };
 
-export const addQuotation = async (quotationData: Omit<Quotation, "id" | "quotationNumber" | "createdAt" | "updatedAt" | "companyName" | "companyEmail">): Promise<Quotation> => {
+export const addQuotation = async (
+  quotationData: Omit<Quotation, "id" | "quotationNumber" | "createdAt" | "updatedAt" | "companyName" | "companyEmail" | "validUntil" | "notes">
+): Promise<Quotation> => {
   await new Promise(resolve => setTimeout(resolve, 300));
   
-  // Fetch current company settings for quotation numbering
   const settings = await getMyCompanySettings();
   const nextNumberStr = String(settings.quotationNextNumber).padStart(3, '0');
   const generatedQuotationNumber = `${settings.quotationPrefix}${nextNumberStr}`;
@@ -202,33 +239,50 @@ export const addQuotation = async (quotationData: Omit<Quotation, "id" | "quotat
     quotationNumber: generatedQuotationNumber,
     createdAt: new Date(),
     updatedAt: new Date(),
+    status: quotationData.status || 'draft', // Ensure status is set
+    // validUntil and notes are not part of quotationData for create
   };
   newQuotation = populateCompanyDetails(newQuotation);
   quotationsStore.push(newQuotation);
 
-  // Increment and save the next quotation number
   await updateMyCompanySettings({ quotationNextNumber: settings.quotationNextNumber + 1 });
   
-  return JSON.parse(JSON.stringify(newQuotation));
+  return JSON.parse(JSON.stringify({
+    ...newQuotation,
+    date: newQuotation.date.toISOString(),
+    // validUntil is not set here
+    createdAt: newQuotation.createdAt.toISOString(),
+    updatedAt: newQuotation.updatedAt.toISOString(),
+  }));
 };
 
-export const updateQuotation = async (id: string, updates: Partial<Omit<Quotation, "id" | "quotationNumber" | "createdAt" | "companyName" | "companyEmail">>): Promise<Quotation | null> => {
+export const updateQuotation = async (
+  id: string, 
+  updates: Partial<Omit<Quotation, "id" | "quotationNumber" | "createdAt" | "companyName" | "companyEmail">>
+): Promise<Quotation | null> => {
   await new Promise(resolve => setTimeout(resolve, 300));
   const quotationIndex = quotationsStore.findIndex(q => q.id === id);
   if (quotationIndex === -1) return null;
   
-  let updatedQuotationData = { 
+  let updatedQuotationData: Quotation = { 
     ...quotationsStore[quotationIndex], 
     ...updates, 
     updatedAt: new Date(),
   };
+  
   // Ensure company details are populated if companyId changed or for consistency
   const company = companiesStore.find(c => c.id === updatedQuotationData.companyId);
   updatedQuotationData.companyName = company?.name;
   updatedQuotationData.companyEmail = company?.contactEmail;
 
   quotationsStore[quotationIndex] = updatedQuotationData;
-  return JSON.parse(JSON.stringify(updatedQuotationData));
+  return JSON.parse(JSON.stringify({
+    ...updatedQuotationData,
+    date: updatedQuotationData.date.toISOString(),
+    validUntil: updatedQuotationData.validUntil ? updatedQuotationData.validUntil.toISOString() : undefined,
+    createdAt: updatedQuotationData.createdAt.toISOString(),
+    updatedAt: updatedQuotationData.updatedAt.toISOString(),
+  }));
 };
 
 export const deleteQuotation = async (id: string): Promise<boolean> => {
@@ -237,4 +291,3 @@ export const deleteQuotation = async (id: string): Promise<boolean> => {
   quotationsStore = quotationsStore.filter(q => q.id !== id);
   return quotationsStore.length < initialLength;
 };
-

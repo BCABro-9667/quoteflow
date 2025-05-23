@@ -16,8 +16,9 @@ export interface ProductItem {
   hsn: string;
   name: string;
   description?: string;
-  imageUrl?: string; // Optional
+  imageUrl?: string; // Optional, and might be used for display if sourced elsewhere
   quantity: number;
+  unitType?: string; // e.g., "SET", "PCS", "KG"
   unitPrice: number;
   // totalPrice will be calculated: quantity * unitPrice
 }
@@ -29,10 +30,10 @@ export interface Quotation {
   companyName?: string; // Denormalized for display, populated on fetch
   companyEmail?: string; // Denormalized for display
   date: Date;
-  validUntil?: Date;
+  validUntil?: Date; // Optional, removed from create form
   items: ProductItem[];
   // subTotal, taxAmount, grandTotal will be calculated
-  notes?: string;
+  notes?: string; // Optional, removed from create form
   status: 'draft' | 'sent' | 'accepted' | 'rejected' | 'archived';
   createdAt: Date;
   updatedAt: Date;
@@ -63,4 +64,3 @@ export interface MyCompanySettings {
   quotationPrefix: string;
   quotationNextNumber: number;
 }
-
