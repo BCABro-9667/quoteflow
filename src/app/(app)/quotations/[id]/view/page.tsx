@@ -41,7 +41,7 @@ export default async function ViewQuotationPage({ params }: { params: { id: stri
         <QuotationViewActions quotationId={quotation.id} quotationNumber={quotation.quotationNumber} />
       </div>
 
-      <Card className="w-full max-w-4xl mx-auto shadow-2xl print:shadow-none print:border-none">
+      <Card id="quotationCard" className="w-full max-w-4xl mx-auto shadow-2xl print:shadow-none print:border-none bg-card"> {/* Added id and ensured background for capture */}
         <CardHeader className="bg-muted/30 p-6 print:bg-transparent">
           <div className="flex flex-col md:flex-row justify-between items-start">
             <div>
