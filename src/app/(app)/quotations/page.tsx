@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, PlusCircle, Search, Loader2, CheckCircle, Send } from "lucide-react";
-import { getQuotations } from "@/lib/mock-data";
+import * as db from "@/lib/database"; // Changed from mock-data
 import { QuotationActions } from "@/components/features/quotations/quotation-actions";
 import type { Quotation } from "@/types";
 import { Badge } from "@/components/ui/badge";
@@ -141,11 +141,16 @@ export default function QuotationsPage() {
 
   const fetchQuotations = useCallback(async () => {
     setIsLoading(true);
-    let quotationsData = await getQuotations();
-    if (initialCompanyId) {
-      quotationsData = quotationsData.filter(q => q.companyId === initialCompanyId);
+    try {
+      let quotationsData = await db.getQuotations(); // Changed from mock-data
+      if (initialCompanyId) {
+        quotationsData = quotationsData.filter(q => q.companyId === initialCompanyId);
+      }
+      setAllQuotations(quotationsData);
+    } catch (error) {
+      console.error("Failed to fetch quotations:", error);
+      // Optionally, set an error state here to display to the user
     }
-    setAllQuotations(quotationsData);
     setIsLoading(false);
   }, [initialCompanyId]);
 
@@ -171,10 +176,8 @@ export default function QuotationsPage() {
         toast({ title: "Error", description: result.message, variant: "destructive" });
       } else {
         toast({ title: "Success", description: result.message });
-        // No need to manually refetch, revalidatePath in action handles it.
-        // For faster UI update, you could optimistically update allQuotations state here
-        // or rely on the revalidation which might be slightly delayed.
-        // For now, relying on revalidation which calls fetchQuotations again via useEffect.
+        // Optimistically update UI or refetch
+        fetchQuotations(); 
       }
     });
   };

@@ -1,7 +1,7 @@
 
-import { getQuotationById, getCompanyById, getMyCompanySettings } from "@/lib/mock-data";
+import * as db from "@/lib/database"; // Changed from mock-data
 import { notFound } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import Image from "next/image";
@@ -21,14 +21,16 @@ function getStatusBadgeVariant(status: Quotation['status']): "default" | "second
 }
 
 export default async function ViewQuotationPage({ params }: { params: { id: string } }) {
-  const quotation = await getQuotationById(params.id);
-  const myCompany = await getMyCompanySettings();
+  const quotation = await db.getQuotationById(params.id); // Changed from mock-data
+  const myCompany = await db.getMyCompanySettings(); // Changed from mock-data
 
   if (!quotation) {
     notFound();
   }
 
-  const clientCompany = await getCompanyById(quotation.companyId);
+  // Client company is now populated directly in quotation object by db.getQuotationById
+  const clientCompany = await db.getCompanyById(quotation.companyId);
+
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-0">
@@ -49,6 +51,7 @@ export default async function ViewQuotationPage({ params }: { params: { id: stri
                   height={50} 
                   className="mb-4 object-contain" 
                   data-ai-hint="company logo"
+                  unoptimized={myCompany.logoUrl.startsWith('data:')}
                 />
               )}
               {myCompany.website ? (
@@ -104,7 +107,7 @@ export default async function ViewQuotationPage({ params }: { params: { id: stri
                     <td className="p-3 align-top">
                       <div className="font-medium">{item.name}</div>
                       <div className="text-xs text-muted-foreground">HSN/SAC: {item.hsn}</div>
-                       {item.imageUrl && <Image src={item.imageUrl} alt={item.name} width={50} height={50} className="mt-1 rounded object-cover print:hidden" data-ai-hint="product small" />}
+                       {item.imageUrl && <Image src={item.imageUrl} alt={item.name} width={50} height={50} className="mt-1 rounded object-cover print:hidden" data-ai-hint="product small" unoptimized={item.imageUrl.startsWith('data:')} />}
                     </td>
                     <td className="p-3 align-top hidden md:table-cell">{item.description || '-'}</td>
                     <td className="p-3 align-top text-right">{item.quantity}{item.unitType ? ` ${item.unitType}` : ''}</td>

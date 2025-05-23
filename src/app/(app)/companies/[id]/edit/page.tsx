@@ -1,12 +1,13 @@
+
 import { CompanyForm } from "@/components/features/companies/company-form";
 import { PageHeader } from "@/components/shared/page-header";
 import { updateCompanyAction } from "@/lib/actions";
-import { getCompanyById } from "@/lib/mock-data";
+import * as db from "@/lib/database"; // Changed from mock-data
 import { Building2 } from "lucide-react";
 import { notFound } from "next/navigation";
 
 export default async function EditCompanyPage({ params }: { params: { id: string } }) {
-  const company = await getCompanyById(params.id);
+  const company = await db.getCompanyById(params.id); // Changed from mock-data
 
   if (!company) {
     notFound();

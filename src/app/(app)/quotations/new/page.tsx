@@ -2,12 +2,12 @@
 import { QuotationForm } from "@/components/features/quotations/quotation-form";
 import { PageHeader } from "@/components/shared/page-header";
 import { createQuotationAction } from "@/lib/actions";
-import { getCompanies, getMyCompanySettings } from "@/lib/mock-data";
+import * as db from "@/lib/database"; // Changed from mock-data
 import { FileText } from "lucide-react";
 
 export default async function NewQuotationPage() {
-  const companies = await getCompanies();
-  const myCompanySettings = await getMyCompanySettings();
+  const companies = await db.getCompanies(); // Changed from mock-data
+  const myCompanySettings = await db.getMyCompanySettings(); // Changed from mock-data
 
   const defaultQuotationNumber = `${myCompanySettings.quotationPrefix}${String(myCompanySettings.quotationNextNumber).padStart(3, '0')}`;
 
@@ -23,4 +23,3 @@ export default async function NewQuotationPage() {
     </>
   );
 }
-

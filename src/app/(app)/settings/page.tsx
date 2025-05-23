@@ -2,13 +2,12 @@
 import { PageHeader } from "@/components/shared/page-header";
 import { Settings as SettingsIcon } from "lucide-react";
 import { MyCompanyForm } from "@/components/features/settings/my-company-form";
-import { getMyCompanySettings } from "@/lib/mock-data";
+import * as db from "@/lib/database"; // Changed from mock-data
 import { updateMyCompanySettingsAction } from "@/lib/actions";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 
 export default async function SettingsPage() {
-  const companySettings = await getMyCompanySettings();
+  const companySettings = await db.getMyCompanySettings(); // Changed from mock-data
 
   return (
     <>
@@ -46,15 +45,16 @@ export default async function SettingsPage() {
           <CardHeader>
             <CardTitle>Quotation Settings</CardTitle>
             <CardDescription>
-              Define default values and preferences for new quotations.
+              Define default values and preferences for new quotations. Current prefix: <strong>{companySettings.quotationPrefix}</strong>, Next number: <strong>{String(companySettings.quotationNextNumber).padStart(3, '0')}</strong>.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              Settings like default tax rate, currency, quotation number prefix, or default terms and conditions could be managed here.
+              Settings like default tax rate, currency, or default terms and conditions could be managed here.
+              You can currently manage the Quotation Prefix and Next Number in the 'Your Company Details' form above.
             </p>
             <div className="mt-4 p-4 border border-dashed rounded-md">
-              <p className="text-sm text-center text-muted-foreground">Quotation defaults coming soon!</p>
+              <p className="text-sm text-center text-muted-foreground">More quotation defaults coming soon!</p>
             </div>
           </CardContent>
         </Card>

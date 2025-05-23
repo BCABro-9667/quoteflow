@@ -1,13 +1,14 @@
+
 import { QuotationForm } from "@/components/features/quotations/quotation-form";
 import { PageHeader } from "@/components/shared/page-header";
 import { updateQuotationAction } from "@/lib/actions";
-import { getCompanies, getQuotationById } from "@/lib/mock-data";
+import * as db from "@/lib/database"; // Changed from mock-data
 import { FileText } from "lucide-react";
 import { notFound } from "next/navigation";
 
 export default async function EditQuotationPage({ params }: { params: { id: string } }) {
-  const quotation = await getQuotationById(params.id);
-  const companies = await getCompanies();
+  const quotation = await db.getQuotationById(params.id); // Changed from mock-data
+  const companies = await db.getCompanies(); // Changed from mock-data
 
   if (!quotation) {
     notFound();

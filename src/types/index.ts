@@ -1,6 +1,6 @@
 
 export interface Company {
-  id: string;
+  id: string; // MongoDB _id as string
   name: string;
   address: string;
   contactPerson: string;
@@ -12,7 +12,7 @@ export interface Company {
 }
 
 export interface ProductItem {
-  id: string;
+  id: string; // MongoDB _id for subdocument, as string
   hsn: string;
   name: string;
   description?: string;
@@ -24,11 +24,11 @@ export interface ProductItem {
 }
 
 export interface Quotation {
-  id: string;
+  id: string; // MongoDB _id as string
   quotationNumber: string; 
-  companyId: string; 
-  companyName?: string; 
-  companyEmail?: string; 
+  companyId: string; // String representation of Company ObjectId
+  companyName?: string; // Populated
+  companyEmail?: string; // Populated
   date: Date;
   validUntil?: Date; 
   items: ProductItem[];
@@ -55,13 +55,13 @@ export type NavItemGroup = {
 };
 
 export interface MyCompanySettings {
-  id: string; 
+  id: string;  // MongoDB _id as string
   name: string;
   address: string;
   email: string;
   phone: string;
   logoUrl: string;
-  website?: string; // Added website field
+  website?: string;
   quotationPrefix: string;
   quotationNextNumber: number;
 }

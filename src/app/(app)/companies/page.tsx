@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2, PlusCircle, Search, Loader2 } from "lucide-react";
-import { getCompanies } from "@/lib/mock-data";
+import * as db from "@/lib/database"; // Changed from mock-data
 import { CompanyActions } from "@/components/features/companies/company-actions";
 import type { Company } from "@/types";
 import { Badge } from "@/components/ui/badge";
@@ -91,8 +91,13 @@ export default function CompaniesPage() {
   useEffect(() => {
     async function fetchData() {
       setIsLoading(true);
-      const companiesData = await getCompanies();
-      setAllCompanies(companiesData);
+      try {
+        const companiesData = await db.getCompanies(); // Changed from mock-data
+        setAllCompanies(companiesData);
+      } catch (error) {
+        console.error("Failed to fetch companies:", error);
+        // Optionally, set an error state here to display to the user
+      }
       setIsLoading(false);
     }
     fetchData();

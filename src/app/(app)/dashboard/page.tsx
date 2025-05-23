@@ -1,15 +1,16 @@
+
 import Link from 'next/link';
 import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
 import { Building2, FileText, PlusCircle, TrendingUp, Clock } from 'lucide-react';
 import { StatCard } from '@/components/features/dashboard/stat-card';
-import { getCompanies, getQuotations } from '@/lib/mock-data';
+import * as db from '@/lib/database'; // Changed from mock-data
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Company, Quotation } from '@/types';
 
 export default async function DashboardPage() {
-  const companies = await getCompanies();
-  const quotations = await getQuotations();
+  const companies = await db.getCompanies(); // Changed from mock-data
+  const quotations = await db.getQuotations(); // Changed from mock-data
 
   const totalCompanies = companies.length;
   const totalQuotations = quotations.length;
