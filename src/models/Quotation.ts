@@ -87,5 +87,5 @@ QuotationSchema.virtual('companyEmail', {
 });
 
 
-const QuotationModel = models.Quotation as Model<QuotationDocument> || mongoose.model<QuotationDocument>('Quotation', QuotationSchema);
+const QuotationModel = (models && models.Quotation as Model<QuotationDocument>) || mongoose.model<QuotationDocument>('Quotation', QuotationSchema);
 export default QuotationModel;

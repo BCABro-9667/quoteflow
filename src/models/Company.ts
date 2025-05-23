@@ -41,5 +41,5 @@ CompanySchema.virtual('id').get(function () {
   return this._id.toHexString();
 });
 
-const CompanyModel = models.Company as Model<CompanyDocument> || mongoose.model<CompanyDocument>('Company', CompanySchema);
+const CompanyModel = (models && models.Company as Model<CompanyDocument>) || mongoose.model<CompanyDocument>('Company', CompanySchema);
 export default CompanyModel;

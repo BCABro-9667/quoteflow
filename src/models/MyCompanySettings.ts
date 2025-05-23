@@ -46,5 +46,5 @@ MyCompanySettingsSchema.virtual('id').get(function () {
   return this._id.toHexString();
 });
 
-const MyCompanySettingsModel = models.MyCompanySettings as Model<MyCompanySettingsDocument> || mongoose.model<MyCompanySettingsDocument>('MyCompanySettings', MyCompanySettingsSchema);
+const MyCompanySettingsModel = (models && models.MyCompanySettings as Model<MyCompanySettingsDocument>) || mongoose.model<MyCompanySettingsDocument>('MyCompanySettings', MyCompanySettingsSchema);
 export default MyCompanySettingsModel;
