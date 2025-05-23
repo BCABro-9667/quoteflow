@@ -105,8 +105,9 @@ let myCompanySettingsStore: MyCompanySettings = {
   email: "support@quoteflow.example.com",
   phone: "+1-800-555-FLOW",
   logoUrl: "https://placehold.co/150x50.png?text=QuoteFlow",
+  website: "https://example.com", // Added default website
   quotationPrefix: "QTN-",
-  quotationNextNumber: mockQuotations.length + 4, // Initialized higher to avoid immediate conflict with existing
+  quotationNextNumber: mockQuotations.length + 4, 
 };
 
 const populateCompanyDetails = (quotation: Quotation): Quotation => {
@@ -235,8 +236,12 @@ export const addQuotation = async (
 ): Promise<Quotation> => {
   await new Promise(resolve => setTimeout(resolve, 300));
   
+  const settings = await getMyCompanySettings();
+  const finalQuotationNumber = quotationData.quotationNumber || `${settings.quotationPrefix}${String(settings.quotationNextNumber).padStart(3, '0')}`;
+
   let newQuotation: Quotation = {
     ...quotationData, 
+    quotationNumber: finalQuotationNumber,
     id: `quot_${Date.now()}`,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -244,8 +249,7 @@ export const addQuotation = async (
   newQuotation = populateCompanyDetails(newQuotation); 
   quotationsStore.push(newQuotation);
 
-  const settings = await getMyCompanySettings();
-  if (newQuotation.quotationNumber === `${settings.quotationPrefix}${String(settings.quotationNextNumber).padStart(3, '0')}`) {
+  if (finalQuotationNumber === `${settings.quotationPrefix}${String(settings.quotationNextNumber).padStart(3, '0')}`) {
     await updateMyCompanySettings({ quotationNextNumber: settings.quotationNextNumber + 1 });
   }
   
@@ -253,6 +257,8 @@ export const addQuotation = async (
     ...newQuotation,
     date: newQuotation.date.toISOString(),
     validUntil: newQuotation.validUntil ? newQuotation.validUntil.toISOString() : undefined,
+    notes: newQuotation.notes,
+    createdBy: newQuotation.createdBy,
     createdAt: newQuotation.createdAt.toISOString(),
     updatedAt: newQuotation.updatedAt.toISOString(),
   }));
@@ -281,6 +287,8 @@ export const updateQuotation = async (
     ...updatedQuotationData,
     date: updatedQuotationData.date.toISOString(),
     validUntil: updatedQuotationData.validUntil ? updatedQuotationData.validUntil.toISOString() : undefined,
+    notes: updatedQuotationData.notes,
+    createdBy: updatedQuotationData.createdBy,
     createdAt: updatedQuotationData.createdAt.toISOString(),
     updatedAt: updatedQuotationData.updatedAt.toISOString(),
   }));

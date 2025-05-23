@@ -23,7 +23,7 @@ export const productItemSchema = z.object({
   description: z.string().optional(),
   imageUrl: z.string().url().optional().or(z.literal("")),
   quantity: z.coerce.number().min(1, "Quantity must be at least 1"),
-  unitType: z.enum(["NOS", "PCS", "SET", "PAIR"], { message: "Please select a valid unit type." }).optional(),
+  unitType: z.enum(["NOS", "PCS", "SET", "PAIR"], { message: "Please select a valid unit type." }).optional().or(z.literal("")).or(z.literal(undefined)),
   unitPrice: z.coerce.number().min(0.01, "Unit price must be positive"),
 });
 
@@ -44,6 +44,7 @@ export const myCompanySettingsSchema = z.object({
   email: z.string().email("Invalid email address for your company"),
   phone: z.string().min(10, "Your company phone number must be at least 10 digits"),
   logoUrl: z.string().url("Invalid URL for logo. Please provide a valid image URL.").or(z.literal("")),
+  website: z.string().url("Invalid website URL. Please enter a full URL (e.g., https://example.com)").optional().or(z.literal("")),
   quotationPrefix: z.string().max(50, "Prefix should be 50 characters or less.").optional().or(z.literal("")),
   quotationNextNumber: z.coerce.number().int().positive("Next number must be a positive integer.").min(1, "Next number must be at least 1."),
 });

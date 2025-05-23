@@ -51,7 +51,13 @@ export default async function ViewQuotationPage({ params }: { params: { id: stri
                   data-ai-hint="company logo"
                 />
               )}
-              <p className="text-sm font-semibold text-foreground">{myCompany.name}</p>
+              {myCompany.website ? (
+                <a href={myCompany.website} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-primary hover:underline">
+                  {myCompany.name}
+                </a>
+              ) : (
+                <p className="text-sm font-semibold text-foreground">{myCompany.name}</p>
+              )}
               <p className="text-sm text-muted-foreground">{myCompany.address}</p>
               <p className="text-sm text-muted-foreground">{myCompany.email} | {myCompany.phone}</p>
             </div>
@@ -124,7 +130,16 @@ export default async function ViewQuotationPage({ params }: { params: { id: stri
           <p className="text-sm text-muted-foreground">Thank You.</p>
           <p className="text-sm text-muted-foreground mb-2">Regards</p>
           
-          <p className="text-sm font-semibold text-primary mt-4">For {myCompany.name}</p>
+          <p className="text-sm font-semibold mt-4">
+            For{' '}
+            {myCompany.website ? (
+              <a href={myCompany.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                {myCompany.name}
+              </a>
+            ) : (
+              <span className="text-primary">{myCompany.name}</span>
+            )}
+          </p>
           
           <div className="mt-8 h-16"> {/* Placeholder for actual signature or space */}
              {/* You might want to add an image of a signature here if available */}

@@ -48,6 +48,7 @@ export function MyCompanyForm({ settings, formAction }: MyCompanyFormProps) {
       email: settings?.email || "",
       phone: settings?.phone || "",
       logoUrl: settings?.logoUrl || "",
+      website: settings?.website || "",
       quotationPrefix: settings?.quotationPrefix || "QTN-",
       quotationNextNumber: settings?.quotationNextNumber || 1,
     },
@@ -71,6 +72,7 @@ export function MyCompanyForm({ settings, formAction }: MyCompanyFormProps) {
         email: settings?.email || "",
         phone: settings?.phone || "",
         logoUrl: settings?.logoUrl || "",
+        website: settings?.website || "",
         quotationPrefix: settings?.quotationPrefix || "QTN-",
         quotationNextNumber: settings?.quotationNextNumber || 1,
     });
@@ -189,6 +191,23 @@ export function MyCompanyForm({ settings, formAction }: MyCompanyFormProps) {
               </div>
             )}
 
+            <FormField
+              control={form.control}
+              name="website"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Company Website URL</FormLabel>
+                  <FormControl>
+                    <Input placeholder="https://yourcompany.com" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    If provided, your company name on quotations will link here.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <Separator className="my-4" />
             <h3 className="text-lg font-medium">Quotation Numbering</h3>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -215,7 +234,9 @@ export function MyCompanyForm({ settings, formAction }: MyCompanyFormProps) {
                     <FormItem>
                     <FormLabel>Next Quotation Number</FormLabel>
                     <FormControl>
-                        <Input type="number" placeholder="1" {...field} />
+                        <Input type="number" placeholder="1" {...field} 
+                         onChange={e => field.onChange(parseInt(e.target.value) || 1)}
+                        />
                     </FormControl>
                     <FormDescription>
                         The next number to use (e.g., 1, 101). Will be padded to 3 digits.
@@ -240,4 +261,3 @@ export function MyCompanyForm({ settings, formAction }: MyCompanyFormProps) {
     </Card>
   );
 }
-

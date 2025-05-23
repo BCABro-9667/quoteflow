@@ -34,7 +34,7 @@ export interface Quotation {
   items: ProductItem[];
   notes?: string; 
   status: 'draft' | 'sent' | 'accepted' | 'rejected' | 'archived';
-  createdBy: string; // Added field for the person who created the quotation
+  createdBy: string; 
   createdAt: Date;
   updatedAt: Date;
 }
@@ -61,6 +61,7 @@ export interface MyCompanySettings {
   email: string;
   phone: string;
   logoUrl: string;
+  website?: string; // Added website field
   quotationPrefix: string;
   quotationNextNumber: number;
 }
