@@ -1,5 +1,6 @@
+
 import type { NavItemGroup } from '@/types';
-import { LayoutDashboard, Building2, FileText, Settings } from 'lucide-react';
+import { LayoutDashboard, Building2, FileText, Settings, User } from 'lucide-react'; // Added Settings, User
 
 export const siteConfig = {
   name: 'QuoteFlow',
@@ -31,15 +32,21 @@ export const mainNav: NavItemGroup[] = [
       },
     ],
   },
-  // {
-  //   title: 'Settings',
-  //   items: [
-  //     {
-  //       title: 'General',
-  //       href: '/settings',
-  //       icon: Settings,
-  //       description: 'Application settings.',
-  //     },
-  //   ],
-  // }
+  {
+    title: 'Account', // Group title for Profile and Settings
+    items: [
+      {
+        title: 'Profile',
+        href: '/profile',
+        icon: User, 
+        description: 'Manage your user profile.',
+      },
+      {
+        title: 'Settings',
+        href: '/settings',
+        icon: Settings,
+        description: 'Application and company settings.',
+      },
+    ],
+  }
 ];

@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { Company, Quotation, ProductItem } from "@/types";
 import * as mockApi from "./mock-data"; // Using mock API
-import { companySchema, companyUpdateSchema, quotationSchema } from "./schemas";
+import { companySchema, companyUpdateSchema, quotationSchema, myCompanySettingsSchema } from "./schemas";
 
 // Company Actions
 export async function createCompanyAction(prevState: any, formData: FormData) {
@@ -65,16 +65,16 @@ export async function deleteCompanyAction(id: string) {
 
 // Quotation Actions
 export async function createQuotationAction(prevState: any, formData: FormData) {
-  // FormData needs careful parsing for nested arrays like 'items'
-  // This is a simplified parsing. Real implementation might need more robust logic or JSON submission.
   const rawData = Object.fromEntries(formData.entries());
   const items: ProductItem[] = [];
   for (let i = 0; ; i++) {
-    if (!rawData[`items[${i}].name`]) break;
+    const itemNameKey = `items[${i}].name`;
+    if (!Object.prototype.hasOwnProperty.call(rawData, itemNameKey)) break;
+    
     items.push({
       id: rawData[`items[${i}].id`]?.toString() || crypto.randomUUID(),
       hsn: rawData[`items[${i}].hsn`]?.toString() || '',
-      name: rawData[`items[${i}].name`]?.toString() || '',
+      name: rawData[itemNameKey]?.toString() || '',
       description: rawData[`items[${i}].description`]?.toString() || '',
       imageUrl: rawData[`items[${i}].imageUrl`]?.toString() || '',
       quantity: parseFloat(rawData[`items[${i}].quantity`]?.toString() || '0'),
@@ -96,12 +96,11 @@ export async function createQuotationAction(prevState: any, formData: FormData) 
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: "Validation failed.",
+      message: "Validation failed for quotation.",
     };
   }
   
   try {
-    // Ensure items have IDs if they are new
     const processedItems = validatedFields.data.items.map(item => ({
       ...item,
       id: item.id || crypto.randomUUID(),
@@ -121,11 +120,13 @@ export async function updateQuotationAction(id: string, prevState: any, formData
  const rawData = Object.fromEntries(formData.entries());
   const items: ProductItem[] = [];
   for (let i = 0; ; i++) {
-    if (!rawData[`items[${i}].name`]) break;
+    const itemNameKey = `items[${i}].name`;
+    if (!Object.prototype.hasOwnProperty.call(rawData, itemNameKey)) break;
+    
     items.push({
       id: rawData[`items[${i}].id`]?.toString() || crypto.randomUUID(),
       hsn: rawData[`items[${i}].hsn`]?.toString() || '',
-      name: rawData[`items[${i}].name`]?.toString() || '',
+      name: rawData[itemNameKey]?.toString() || '',
       description: rawData[`items[${i}].description`]?.toString() || '',
       imageUrl: rawData[`items[${i}].imageUrl`]?.toString() || '',
       quantity: parseFloat(rawData[`items[${i}].quantity`]?.toString() || '0'),
@@ -147,7 +148,7 @@ export async function updateQuotationAction(id: string, prevState: any, formData
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: "Validation failed.",
+      message: "Validation failed for quotation update.",
     };
   }
 
@@ -177,4 +178,27 @@ export async function deleteQuotationAction(id: string) {
   } catch (e) {
     return { message: "Failed to delete quotation." };
   }
+}
+
+// My Company Settings Action
+export async function updateMyCompanySettingsAction(prevState: any, formData: FormData) {
+  const validatedFields = myCompanySettingsSchema.safeParse(Object.fromEntries(formData.entries()));
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Validation failed for company settings.",
+    };
+  }
+
+  try {
+    await mockApi.updateMyCompanySettings(validatedFields.data);
+  } catch (e) {
+    return { message: "Failed to update company settings." };
+  }
+
+  revalidatePath("/settings");
+  revalidatePath("/quotations", "layout"); // Revalidate quotation views that might use this data
+  // No redirect, stay on settings page
+  return { message: "Company settings updated successfully." };
 }

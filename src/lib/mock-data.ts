@@ -1,4 +1,5 @@
-import type { Company, Quotation, ProductItem } from "@/types";
+
+import type { Company, Quotation, ProductItem, MyCompanySettings } from "@/types";
 
 export const mockCompanies: Company[] = [
   {
@@ -88,6 +89,28 @@ export const mockQuotations: Quotation[] = [
 // Helper functions to simulate a backend store
 let companiesStore = [...mockCompanies];
 let quotationsStore = [...mockQuotations.map(q => ({...q, companyName: companiesStore.find(c => c.id === q.companyId)?.name }))];
+
+// My Company Settings Store
+let myCompanySettingsStore: MyCompanySettings = {
+  id: "my-company-settings",
+  name: "QuoteFlow Solutions",
+  address: "456 App Business Park, Suite 100, Tech City, TX 75001",
+  email: "support@quoteflow.example.com",
+  phone: "+1-800-555-FLOW",
+  logoUrl: "https://placehold.co/150x50.png?text=QuoteFlow",
+};
+
+export const getMyCompanySettings = async (): Promise<MyCompanySettings> => {
+  await new Promise(resolve => setTimeout(resolve, 50)); // Simulate network delay
+  return JSON.parse(JSON.stringify(myCompanySettingsStore)); // Deep copy
+};
+
+export const updateMyCompanySettings = async (updates: Partial<Omit<MyCompanySettings, "id">>): Promise<MyCompanySettings> => {
+  await new Promise(resolve => setTimeout(resolve, 150));
+  myCompanySettingsStore = { ...myCompanySettingsStore, ...updates };
+  return JSON.parse(JSON.stringify(myCompanySettingsStore));
+};
+
 
 export const getCompanies = async (): Promise<Company[]> => {
   await new Promise(resolve => setTimeout(resolve, 200)); // Simulate network delay

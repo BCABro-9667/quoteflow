@@ -34,3 +34,12 @@ export const quotationSchema = z.object({
   notes: z.string().optional(),
   status: z.enum(["draft", "sent", "accepted", "rejected", "archived"]),
 });
+
+// My Company Settings Schema
+export const myCompanySettingsSchema = z.object({
+  name: z.string().min(2, "Your company name must be at least 2 characters"),
+  address: z.string().min(5, "Your company address is required"),
+  email: z.string().email("Invalid email address for your company"),
+  phone: z.string().min(10, "Your company phone number must be at least 10 digits"),
+  logoUrl: z.string().url("Invalid URL for logo. Please provide a valid image URL.").or(z.literal("")),
+});

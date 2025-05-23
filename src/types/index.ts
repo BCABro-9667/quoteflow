@@ -1,3 +1,4 @@
+
 export interface Company {
   id: string;
   name: string;
@@ -50,3 +51,12 @@ export type NavItemGroup = {
   title?: string;
   items: NavItem[];
 };
+
+export interface MyCompanySettings {
+  id: string; // Should be a singleton, e.g., "my-company-settings"
+  name: string;
+  address: string;
+  email: string;
+  phone: string;
+  logoUrl: string;
+}

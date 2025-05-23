@@ -1,12 +1,12 @@
 
-import { getQuotationById, getCompanyById } from "@/lib/mock-data";
+import { getQuotationById, getCompanyById, getMyCompanySettings } from "@/lib/mock-data";
 import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
-import type { Quotation } from "@/types"; // Ensure Quotation type is imported
+import type { Quotation } from "@/types"; 
 import { QuotationViewActions } from "@/components/features/quotations/quotation-view-actions";
 
 function getStatusBadgeVariant(status: Quotation['status']): "default" | "secondary" | "destructive" | "outline" {
@@ -22,12 +22,13 @@ function getStatusBadgeVariant(status: Quotation['status']): "default" | "second
 
 export default async function ViewQuotationPage({ params }: { params: { id: string } }) {
   const quotation = await getQuotationById(params.id);
+  const myCompany = await getMyCompanySettings();
 
   if (!quotation) {
     notFound();
   }
 
-  const company = await getCompanyById(quotation.companyId);
+  const clientCompany = await getCompanyById(quotation.companyId);
 
   const subTotal = quotation.items.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
   const taxRate = 0.18; // Example tax rate
@@ -41,14 +42,23 @@ export default async function ViewQuotationPage({ params }: { params: { id: stri
         <QuotationViewActions quotationId={quotation.id} quotationNumber={quotation.quotationNumber} />
       </div>
 
-      <Card id="quotationCard" className="w-full max-w-4xl mx-auto shadow-2xl print:shadow-none print:border-none bg-card"> {/* Added id and ensured background for capture */}
+      <Card id="quotationCard" className="w-full max-w-4xl mx-auto shadow-2xl print:shadow-none print:border-none bg-card">
         <CardHeader className="bg-muted/30 p-6 print:bg-transparent">
           <div className="flex flex-col md:flex-row justify-between items-start">
             <div>
-              <Image src="https://placehold.co/150x50.png?text=QuoteFlow" alt="QuoteFlow Logo" width={150} height={50} className="mb-4" data-ai-hint="logo company"/>
-              <p className="text-sm text-muted-foreground">Your Company Name</p>
-              <p className="text-sm text-muted-foreground">123 Main Street, Anytown, USA</p>
-              <p className="text-sm text-muted-foreground">contact@yourcompany.com</p>
+              {myCompany.logoUrl && (
+                <Image 
+                  src={myCompany.logoUrl} 
+                  alt={`${myCompany.name} Logo`} 
+                  width={150} 
+                  height={50} 
+                  className="mb-4 object-contain" 
+                  data-ai-hint="company logo"
+                />
+              )}
+              <p className="text-sm font-semibold text-foreground">{myCompany.name}</p>
+              <p className="text-sm text-muted-foreground">{myCompany.address}</p>
+              <p className="text-sm text-muted-foreground">{myCompany.email} | {myCompany.phone}</p>
             </div>
             <div className="text-left md:text-right mt-4 md:mt-0">
               <h2 className="text-2xl font-semibold text-primary">QUOTATION</h2>
@@ -63,13 +73,13 @@ export default async function ViewQuotationPage({ params }: { params: { id: stri
             </div>
           </div>
           <Separator className="my-6" />
-          {company && (
+          {clientCompany && (
             <div className="mt-4">
               <h3 className="font-semibold text-muted-foreground mb-1">BILLED TO:</h3>
-              <p className="font-medium text-lg">{company.name}</p>
-              <p className="text-sm text-muted-foreground">{company.address}</p>
-              <p className="text-sm text-muted-foreground">{company.contactPerson} ({company.contactEmail})</p>
-              {company.gstin && <p className="text-sm text-muted-foreground">GSTIN: {company.gstin}</p>}
+              <p className="font-medium text-lg">{clientCompany.name}</p>
+              <p className="text-sm text-muted-foreground">{clientCompany.address}</p>
+              <p className="text-sm text-muted-foreground">{clientCompany.contactPerson} ({clientCompany.contactEmail})</p>
+              {clientCompany.gstin && <p className="text-sm text-muted-foreground">GSTIN: {clientCompany.gstin}</p>}
             </div>
           )}
         </CardHeader>
@@ -134,7 +144,7 @@ export default async function ViewQuotationPage({ params }: { params: { id: stri
         </CardContent>
         <CardFooter className="p-6 bg-muted/30 print:bg-transparent">
           <p className="text-xs text-muted-foreground text-center w-full">
-            Thank you for your business! If you have any questions, please contact us.
+            Thank you for your business! If you have any questions, please contact us at {myCompany.email}.
           </p>
         </CardFooter>
       </Card>
