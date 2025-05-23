@@ -53,16 +53,14 @@ export function QuotationForm({ quotation, companies, formAction, buttonText = "
     resolver: zodResolver(quotationSchema),
     defaultValues: {
       companyId: quotation?.companyId || "",
-      date: quotation?.date ? new Date(quotation.date) : new Date(), // Autofill current date
-      // validUntil: undefined, // Removed from form
+      date: quotation?.date ? new Date(quotation.date) : new Date(),
       items: quotation?.items?.map(item => ({
         ...item, 
         quantity: Number(item.quantity), 
         unitPrice: Number(item.unitPrice),
         unitType: item.unitType || ""
       })) || [{ id: crypto.randomUUID(), hsn: "", name: "", quantity: 1, unitPrice: 0, description: "", unitType: "" }],
-      // notes: "", // Removed from form
-      status: quotation?.status || "draft", // Default to draft, not shown as input
+      status: quotation?.status || "draft",
     },
   });
 
@@ -74,7 +72,7 @@ export function QuotationForm({ quotation, companies, formAction, buttonText = "
   const [subTotal, setSubTotal] = useState(0);
   const [taxAmount, setTaxAmount] = useState(0); 
   const [grandTotal, setGrandTotal] = useState(0);
-  const taxRate = 0.18; // Example tax rate, should ideally be configurable
+  const taxRate = 0.18; 
 
   useEffect(() => {
     const subscription = form.watch((value, { name }) => {
@@ -101,11 +99,13 @@ export function QuotationForm({ quotation, companies, formAction, buttonText = "
   useEffect(() => {
     if (state?.message && !state.errors) {
       toast({ title: "Success", description: state.message });
+      // Optionally reset form or redirect here
     } else if (state?.message && state.errors) {
       toast({ title: "Error", description: state.message, variant: "destructive" });
        if (state.errors) {
         Object.entries(state.errors).forEach(([fieldName, fieldErrors]) => {
           if (Array.isArray(fieldErrors)) {
+            // @ts-ignore TODO: Fix this type error for fieldName
             form.setError(fieldName as keyof QuotationFormValues, {
               type: "manual",
               message: fieldErrors.join(", "),
@@ -116,6 +116,29 @@ export function QuotationForm({ quotation, companies, formAction, buttonText = "
     }
   }, [state, toast, form]);
 
+  const processSubmit = async (data: QuotationFormValues) => {
+    const formData = new FormData();
+
+    formData.append('companyId', data.companyId);
+    if (data.date) {
+        formData.append('date', data.date.toISOString()); // Send date as ISO string
+    }
+    formData.append('status', data.status);
+
+    data.items.forEach((item, index) => {
+        formData.append(`items.${index}.id`, item.id || crypto.randomUUID());
+        formData.append(`items.${index}.hsn`, item.hsn);
+        formData.append(`items.${index}.name`, item.name);
+        formData.append(`items.${index}.description`, item.description || '');
+        // formData.append(`items.${index}.imageUrl`, item.imageUrl || ''); // imageUrl removed from form
+        formData.append(`items.${index}.quantity`, item.quantity.toString());
+        formData.append(`items.${index}.unitType`, item.unitType || '');
+        formData.append(`items.${index}.unitPrice`, item.unitPrice.toString());
+    });
+    
+    dispatch(formData); 
+  };
+
 
   return (
     <Card className="max-w-4xl mx-auto shadow-lg">
@@ -124,7 +147,7 @@ export function QuotationForm({ quotation, companies, formAction, buttonText = "
         {!isEditing && <p className="text-sm text-muted-foreground">Quotation number will be auto-generated.</p>}
       </CardHeader>
       <Form {...form}>
-        <form action={dispatch} className="space-y-8">
+        <form onSubmit={form.handleSubmit(processSubmit)} className="space-y-8">
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
@@ -177,7 +200,6 @@ export function QuotationForm({ quotation, companies, formAction, buttonText = "
                           mode="single"
                           selected={field.value}
                           onSelect={field.onChange}
-                          // disabled={(date) => date > new Date() || date < new Date("1900-01-01")} // Can allow future dates if needed
                           initialFocus
                         />
                       </PopoverContent>
@@ -188,7 +210,6 @@ export function QuotationForm({ quotation, companies, formAction, buttonText = "
               />
             </div>
             
-            {/* Hidden field for status, defaulted to 'draft' */}
             <input type="hidden" {...form.register("status")} />
 
 
@@ -227,7 +248,7 @@ export function QuotationForm({ quotation, companies, formAction, buttonText = "
             <Button type="button" variant="outline" asChild>
               <Link href="/quotations">Cancel</Link>
             </Button>
-            <Button type="submit" disabled={form.formState.isSubmitting}>
+            <Button type="submit" disabled={form.formState.isSubmitting || state?.message === "Success" /* Prevent re-submission on success */}>
               {form.formState.isSubmitting ? "Saving..." : buttonText}
             </Button>
           </CardFooter>
@@ -236,3 +257,4 @@ export function QuotationForm({ quotation, companies, formAction, buttonText = "
     </Card>
   );
 }
+
