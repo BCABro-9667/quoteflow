@@ -76,7 +76,7 @@ export function CompanyForm({ company, formAction, buttonText = "Save Company" }
                 <FormItem>
                   <FormLabel>Company Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Innovatech Solutions Ltd." {...field} />
+                    <Input placeholder="Company Name" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -89,7 +89,7 @@ export function CompanyForm({ company, formAction, buttonText = "Save Company" }
                 <FormItem>
                   <FormLabel>Address</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="123 Tech Park, Silicon Valley, CA" {...field} />
+                    <Textarea placeholder="Address" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -103,7 +103,7 @@ export function CompanyForm({ company, formAction, buttonText = "Save Company" }
                   <FormItem>
                     <FormLabel>Contact Person</FormLabel>
                     <FormControl>
-                      <Input placeholder="Alice Wonderland" {...field} />
+                      <Input placeholder="Contact Person" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -116,7 +116,7 @@ export function CompanyForm({ company, formAction, buttonText = "Save Company" }
                   <FormItem>
                     <FormLabel>Contact Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="alice@example.com" {...field} />
+                      <Input type="email" placeholder="Email" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -131,7 +131,7 @@ export function CompanyForm({ company, formAction, buttonText = "Save Company" }
                   <FormItem>
                     <FormLabel>Contact Phone</FormLabel>
                     <FormControl>
-                      <Input type="tel" placeholder="+1-555-0100" {...field} />
+                      <Input type="tel" placeholder="Phone No." {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -144,7 +144,7 @@ export function CompanyForm({ company, formAction, buttonText = "Save Company" }
                   <FormItem>
                     <FormLabel>GSTIN (Optional)</FormLabel>
                     <FormControl>
-                      <Input placeholder="27ABCDE1234F1Z5" {...field} />
+                      <Input placeholder="GSTIN" {...field} />
                     </FormControl>
                     <FormDescription>
                       Enter the Goods and Services Tax Identification Number.
