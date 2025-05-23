@@ -19,7 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { myCompanySettingsSchema } from "@/lib/schemas";
 import type { MyCompanySettings } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { Separator } from "@/components/ui/separator";
@@ -39,6 +39,7 @@ const initialState = {
 export function MyCompanyForm({ settings, formAction }: MyCompanyFormProps) {
   const [state, dispatch] = useActionState(formAction, initialState);
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<MyCompanyFormValues>({
     resolver: zodResolver(myCompanySettingsSchema),
@@ -61,6 +62,17 @@ export function MyCompanyForm({ settings, formAction }: MyCompanyFormProps) {
       toast({ title: "Success", description: state.message });
     } else if (state?.message && state.errors) {
       toast({ title: "Error", description: state.message, variant: "destructive" });
+       // Apply field-specific errors from server action to the form
+       if (state.errors && typeof state.errors === 'object') {
+        Object.entries(state.errors).forEach(([fieldName, fieldErrors]) => {
+          if (Array.isArray(fieldErrors) && fieldErrors.length > 0) {
+            form.setError(fieldName as keyof MyCompanyFormValues, {
+              type: "manual",
+              message: fieldErrors.join(", "),
+            });
+          }
+        });
+      }
     }
   }, [state, toast, form]);
 
@@ -78,6 +90,40 @@ export function MyCompanyForm({ settings, formAction }: MyCompanyFormProps) {
     });
   }, [settings, form]);
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        form.setValue("logoUrl", reader.result as string, { shouldValidate: true, shouldDirty: true });
+      };
+      reader.readAsDataURL(file);
+    } else {
+      // If no file is selected (e.g., user clears the file input), clear the logoUrl
+      // Or, you might want to revert to a previously saved URL if you store that separately.
+      // For this prototype, clearing it or setting to empty string is fine.
+      form.setValue("logoUrl", "", { shouldValidate: true, shouldDirty: true });
+    }
+  };
+  
+  const processSubmit = (data: MyCompanyFormValues) => {
+    const formData = new FormData();
+    Object.entries(data).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        if (key === 'quotationNextNumber') {
+          formData.append(key, String(value));
+        } else {
+          formData.append(key, value as string);
+        }
+      }
+    });
+    // If a file was selected, its Data URI is already in data.logoUrl
+    // If no file was selected and it was cleared, logoUrl might be ""
+    // If a file was never touched and there was an existing URL, it's in data.logoUrl
+    dispatch(formData);
+  };
+
+
   return (
     <Card className="shadow-lg">
       <CardHeader>
@@ -87,7 +133,7 @@ export function MyCompanyForm({ settings, formAction }: MyCompanyFormProps) {
         </CardDescription>
       </CardHeader>
       <Form {...form}>
-        <form action={dispatch} className="space-y-8">
+        <form onSubmit={form.handleSubmit(processSubmit)} className="space-y-8">
           <CardContent className="space-y-6">
             <FormField
               control={form.control}
@@ -143,22 +189,33 @@ export function MyCompanyForm({ settings, formAction }: MyCompanyFormProps) {
                 )}
               />
             </div>
-            <FormField
-              control={form.control}
-              name="logoUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Company Logo URL</FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://example.com/logo.png" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Provide a direct URL to your company's logo image.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            
+            {/* File Input for Logo */}
+            <FormItem>
+              <FormLabel htmlFor="logoFile">Company Logo</FormLabel>
+              <Input
+                id="logoFile"
+                type="file"
+                accept="image/png, image/jpeg, image/gif, image/svg+xml"
+                className="block w-full text-sm text-slate-500
+                  file:mr-4 file:py-2 file:px-4
+                  file:rounded-full file:border-0
+                  file:text-sm file:font-semibold
+                  file:bg-primary/10 file:text-primary
+                  hover:file:bg-primary/20"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+              />
+              <FormDescription>
+                Upload your company's logo (PNG, JPG, GIF, SVG). Max 2MB.
+              </FormDescription>
+              <FormField
+                control={form.control}
+                name="logoUrl"
+                render={() => <FormMessage />} // Error message for logoUrl (e.g. if server-side validation fails)
+              />
+            </FormItem>
+
             {currentLogoUrl && (
               <div>
                 <FormLabel>Logo Preview</FormLabel>
@@ -170,24 +227,17 @@ export function MyCompanyForm({ settings, formAction }: MyCompanyFormProps) {
                     height={50} 
                     className="object-contain"
                     data-ai-hint="company logo"
+                    unoptimized={currentLogoUrl.startsWith('data:')} // Important for Data URIs
                     onError={(e) => {
                       e.currentTarget.style.display = 'none';
-                      const errorMsg = form.getFieldState("logoUrl").error?.message;
-                      if (!errorMsg) {
-                        form.setError("logoUrl", { type: "manual", message: "Logo image could not be loaded from URL." });
-                      }
+                      // Don't set form error here if it's just a preview loading issue for an external URL
+                      // Server-side validation will catch invalid actual URLs
                     }}
                     onLoad={(e) => {
                        e.currentTarget.style.display = 'block';
-                       if (form.getFieldState("logoUrl").error) {
-                           form.clearErrors("logoUrl");
-                       }
                     }}
                   />
                 </div>
-                {form.formState.errors.logoUrl?.message && !form.formState.errors.logoUrl?.message.includes("Invalid URL") && (
-                   <p className="text-sm font-medium text-destructive mt-1">{form.formState.errors.logoUrl?.message}</p>
-                )}
               </div>
             )}
 

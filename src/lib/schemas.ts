@@ -43,8 +43,9 @@ export const myCompanySettingsSchema = z.object({
   address: z.string().min(5, "Your company address is required"),
   email: z.string().email("Invalid email address for your company"),
   phone: z.string().min(10, "Your company phone number must be at least 10 digits"),
-  logoUrl: z.string().url("Invalid URL for logo. Please provide a valid image URL.").or(z.literal("")),
+  logoUrl: z.string().optional().or(z.literal("")), // Allow Data URIs or standard URLs
   website: z.string().url("Invalid website URL. Please enter a full URL (e.g., https://example.com)").optional().or(z.literal("")),
   quotationPrefix: z.string().max(50, "Prefix should be 50 characters or less.").optional().or(z.literal("")),
   quotationNextNumber: z.coerce.number().int().positive("Next number must be a positive integer.").min(1, "Next number must be at least 1."),
 });
+
