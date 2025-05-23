@@ -13,7 +13,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input"; // Keep for totals display
+// import { Input } from "@/components/ui/input"; // Keep for totals display (not needed for individual items)
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -25,7 +25,7 @@ import type { Company, Quotation } from "@/types";
 import { ProductItemRow } from "./product-item-row";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import Link from "next/link";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 type QuotationFormValues = z.infer<typeof quotationSchema>;
@@ -58,8 +58,8 @@ export function QuotationForm({ quotation, companies, formAction, buttonText = "
         ...item, 
         quantity: Number(item.quantity), 
         unitPrice: Number(item.unitPrice),
-        unitType: item.unitType || ""
-      })) || [{ id: crypto.randomUUID(), hsn: "", name: "", quantity: 1, unitPrice: 0, description: "", unitType: "" }],
+        unitType: item.unitType || undefined // Ensure unitType is handled correctly
+      })) || [{ id: crypto.randomUUID(), hsn: "", name: "", quantity: 1, unitPrice: 0, description: "", unitType: undefined }],
       status: quotation?.status || "draft",
     },
   });
@@ -69,33 +69,6 @@ export function QuotationForm({ quotation, companies, formAction, buttonText = "
     name: "items",
   });
   
-  const [subTotal, setSubTotal] = useState(0);
-  const [taxAmount, setTaxAmount] = useState(0); 
-  const [grandTotal, setGrandTotal] = useState(0);
-  const taxRate = 0.18; 
-
-  useEffect(() => {
-    const subscription = form.watch((value, { name }) => {
-      if (name?.startsWith("items")) {
-        const items = value.items || [];
-        const currentSubTotal = items.reduce((acc, item) => acc + (item?.quantity || 0) * (item?.unitPrice || 0), 0);
-        setSubTotal(currentSubTotal);
-        const currentTaxAmount = currentSubTotal * taxRate;
-        setTaxAmount(currentTaxAmount);
-        setGrandTotal(currentSubTotal + currentTaxAmount);
-      }
-    });
-    // Calculate initial totals
-    const initialItems = form.getValues("items") || [];
-    const currentSubTotal = initialItems.reduce((acc, item) => acc + (item?.quantity || 0) * (item?.unitPrice || 0), 0);
-    setSubTotal(currentSubTotal);
-    const currentTaxAmount = currentSubTotal * taxRate;
-    setTaxAmount(currentTaxAmount);
-    setGrandTotal(currentSubTotal + currentTaxAmount);
-
-    return () => subscription.unsubscribe();
-  }, [form, taxRate]);
-
   useEffect(() => {
     if (state?.message && !state.errors) {
       toast({ title: "Success", description: state.message });
@@ -225,7 +198,7 @@ export function QuotationForm({ quotation, companies, formAction, buttonText = "
                 variant="outline"
                 size="sm"
                 className="mt-4"
-                onClick={() => append({ id: crypto.randomUUID(), hsn: "", name: "", quantity: 1, unitPrice: 0, description: "", unitType: "" })}
+                onClick={() => append({ id: crypto.randomUUID(), hsn: "", name: "", quantity: 1, unitPrice: 0, description: "", unitType: undefined })}
               >
                 <PlusCircle className="mr-2 h-4 w-4" /> Add Item
               </Button>
@@ -234,11 +207,7 @@ export function QuotationForm({ quotation, companies, formAction, buttonText = "
               )}
             </div>
 
-            <div className="mt-6 space-y-2 text-right">
-              <p className="text-md">Subtotal: <span className="font-semibold">${subTotal.toFixed(2)}</span></p>
-              <p className="text-md">Tax ({taxRate * 100}%): <span className="font-semibold">${taxAmount.toFixed(2)}</span></p>
-              <p className="text-xl font-bold">Grand Total: <span className="text-primary">${grandTotal.toFixed(2)}</span></p>
-            </div>
+            {/* Removed Subtotal, Tax, and Grand Total section */}
 
             {state?.message && state.errors && Object.keys(state.errors).length === 0 && (
                 <p className="text-sm font-medium text-destructive">{state.message}</p>
@@ -257,4 +226,3 @@ export function QuotationForm({ quotation, companies, formAction, buttonText = "
     </Card>
   );
 }
-

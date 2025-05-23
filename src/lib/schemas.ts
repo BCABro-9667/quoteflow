@@ -23,17 +23,15 @@ export const productItemSchema = z.object({
   description: z.string().optional(),
   imageUrl: z.string().url().optional().or(z.literal("")), // Kept in schema for data integrity, removed from form UI for item entry
   quantity: z.coerce.number().min(1, "Quantity must be at least 1"),
-  unitType: z.string().optional(), // E.g., "SET", "PCS"
+  unitType: z.enum(["NOS", "PCS", "SET", "PAIR"]).optional(), // E.g., "SET", "PCS"
   unitPrice: z.coerce.number().min(0.01, "Unit price must be positive"),
 });
 
 export const quotationSchema = z.object({
   companyId: z.string().min(1, "Company is required"),
   date: z.coerce.date(),
-  // validUntil: z.coerce.date().optional(), // Removed from create form
   items: z.array(productItemSchema).min(1, "At least one product item is required"),
-  // notes: z.string().optional(), // Removed from create form
-  status: z.enum(["draft", "sent", "accepted", "rejected", "archived"]), // Will be defaulted in form, not shown as input
+  status: z.enum(["draft", "sent", "accepted", "rejected", "archived"]),
 });
 
 // My Company Settings Schema

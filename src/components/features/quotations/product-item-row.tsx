@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trash2 } from "lucide-react";
 import type { quotationSchema } from "@/lib/schemas";
 
@@ -17,6 +18,9 @@ interface ProductItemRowProps {
   index: number;
   remove: UseFieldArrayReturn<QuotationFormValues, "items">["remove"];
 }
+
+const hsnOptions = ["58468758", "58468759", "58468755", "58468752"];
+const unitTypeOptions = ["NOS", "PCS", "SET", "PAIR"];
 
 export function ProductItemRow({ form, index, remove }: ProductItemRowProps) {
   const quantity = form.watch(`items.${index}.quantity`);
@@ -56,9 +60,20 @@ export function ProductItemRow({ form, index, remove }: ProductItemRowProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>HSN/SAC</FormLabel>
-              <FormControl>
-                <Input placeholder="8471" {...field} />
-              </FormControl>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select HSN" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {hsnOptions.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
@@ -99,9 +114,20 @@ export function ProductItemRow({ form, index, remove }: ProductItemRowProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Unit Type</FormLabel>
-              <FormControl>
-                <Input placeholder="PCS / SET / KG" {...field} />
-              </FormControl>
+               <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Unit Type" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {unitTypeOptions.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
