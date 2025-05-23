@@ -45,7 +45,7 @@ const mockProductItems: ProductItem[] = [
   { id: "prod_5", hsn: "8518", name: "Bluetooth Headphones", quantity: 3, unitType: "SET", unitPrice: 150.00 },
 ];
 
-export let mockQuotations: Quotation[] = [ // Made this let so it can be reassigned
+export let mockQuotations: Quotation[] = [
   {
     id: "quot_1",
     quotationNumber: "QTN-2023-001",
@@ -56,7 +56,7 @@ export let mockQuotations: Quotation[] = [ // Made this let so it can be reassig
     validUntil: new Date("2023-07-01T10:00:00Z"),
     items: [mockProductItems[0], mockProductItems[3]],
     status: "sent",
-    notes: "Includes 2 year extended warranty.",
+    notes: "Includes 2 year extended warranty. Payment terms: Net 30.",
     createdAt: new Date("2023-06-01T10:00:00Z"),
     updatedAt: new Date("2023-06-02T11:00:00Z"),
   },
@@ -70,7 +70,7 @@ export let mockQuotations: Quotation[] = [ // Made this let so it can be reassig
     validUntil: new Date("2023-07-15T14:00:00Z"),
     items: [mockProductItems[1], mockProductItems[4]],
     status: "draft",
-    notes: "Requires 50% advance payment.",
+    notes: "Requires 50% advance payment. Delivery within 2 weeks.",
     createdAt: new Date("2023-06-15T14:00:00Z"),
     updatedAt: new Date("2023-06-15T14:00:00Z"),
   },
@@ -84,6 +84,7 @@ export let mockQuotations: Quotation[] = [ // Made this let so it can be reassig
     validUntil: new Date("2023-08-01T09:30:00Z"),
     items: [mockProductItems[2]],
     status: "accepted",
+    notes: "Special discount applied.",
     createdAt: new Date("2023-07-01T09:30:00Z"),
     updatedAt: new Date("2023-07-05T10:00:00Z"),
   },
@@ -102,7 +103,7 @@ let myCompanySettingsStore: MyCompanySettings = {
   phone: "+1-800-555-FLOW",
   logoUrl: "https://placehold.co/150x50.png?text=QuoteFlow",
   quotationPrefix: "QTN-",
-  quotationNextNumber: mockQuotations.length + 1, // Initialize next number based on existing quotations
+  quotationNextNumber: mockQuotations.length + 4, // Initialized higher to avoid immediate conflict with existing
 };
 
 const populateCompanyDetails = (quotation: Quotation): Quotation => {
@@ -110,13 +111,13 @@ const populateCompanyDetails = (quotation: Quotation): Quotation => {
   return {
     ...quotation,
     companyName: company?.name,
-    companyEmail: company?.contactEmail, // Ensure this is populated
+    companyEmail: company?.contactEmail,
   };
 };
 
 export const getMyCompanySettings = async (): Promise<MyCompanySettings> => {
-  await new Promise(resolve => setTimeout(resolve, 50)); // Simulate network delay
-  return JSON.parse(JSON.stringify(myCompanySettingsStore)); // Deep copy
+  await new Promise(resolve => setTimeout(resolve, 50));
+  return JSON.parse(JSON.stringify(myCompanySettingsStore));
 };
 
 export const updateMyCompanySettings = async (updates: Partial<Omit<MyCompanySettings, "id">>): Promise<MyCompanySettings> => {
@@ -127,7 +128,7 @@ export const updateMyCompanySettings = async (updates: Partial<Omit<MyCompanySet
 
 
 export const getCompanies = async (): Promise<Company[]> => {
-  await new Promise(resolve => setTimeout(resolve, 200)); // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 200));
   return JSON.parse(JSON.stringify(companiesStore.map(c => ({
     ...c,
     createdAt: c.createdAt.toISOString(),
@@ -217,6 +218,7 @@ export const getQuotationById = async (id: string): Promise<Quotation | undefine
       ...populated,
       date: populated.date.toISOString(),
       validUntil: populated.validUntil ? populated.validUntil.toISOString() : undefined,
+      notes: populated.notes, // ensure notes are included
       createdAt: populated.createdAt.toISOString(),
       updatedAt: populated.updatedAt.toISOString(),
     }));
@@ -224,33 +226,30 @@ export const getQuotationById = async (id: string): Promise<Quotation | undefine
   return undefined;
 };
 
+// quotationData type here includes quotationNumber and notes
 export const addQuotation = async (
-  quotationData: Omit<Quotation, "id" | "quotationNumber" | "createdAt" | "updatedAt" | "companyName" | "companyEmail" | "validUntil" | "notes">
+  quotationData: Omit<Quotation, "id" | "createdAt" | "updatedAt" | "companyName" | "companyEmail">
 ): Promise<Quotation> => {
   await new Promise(resolve => setTimeout(resolve, 300));
   
-  const settings = await getMyCompanySettings();
-  const nextNumberStr = String(settings.quotationNextNumber).padStart(3, '0');
-  const generatedQuotationNumber = `${settings.quotationPrefix}${nextNumberStr}`;
-
   let newQuotation: Quotation = {
-    ...quotationData,
+    ...quotationData, // Contains quotationNumber, companyId, date, items, status, notes
     id: `quot_${Date.now()}`,
-    quotationNumber: generatedQuotationNumber,
     createdAt: new Date(),
     updatedAt: new Date(),
-    status: quotationData.status || 'draft', // Ensure status is set
-    // validUntil and notes are not part of quotationData for create
+    // validUntil is optional and might not be in quotationData
   };
-  newQuotation = populateCompanyDetails(newQuotation);
+  newQuotation = populateCompanyDetails(newQuotation); // Populates companyName and companyEmail
   quotationsStore.push(newQuotation);
 
+  // Increment the next quotation number in settings
+  const settings = await getMyCompanySettings();
   await updateMyCompanySettings({ quotationNextNumber: settings.quotationNextNumber + 1 });
   
   return JSON.parse(JSON.stringify({
     ...newQuotation,
     date: newQuotation.date.toISOString(),
-    // validUntil is not set here
+    validUntil: newQuotation.validUntil ? newQuotation.validUntil.toISOString() : undefined,
     createdAt: newQuotation.createdAt.toISOString(),
     updatedAt: newQuotation.updatedAt.toISOString(),
   }));
@@ -258,7 +257,7 @@ export const addQuotation = async (
 
 export const updateQuotation = async (
   id: string, 
-  updates: Partial<Omit<Quotation, "id" | "quotationNumber" | "createdAt" | "companyName" | "companyEmail">>
+  updates: Partial<Omit<Quotation, "id" | "createdAt" | "companyName" | "companyEmail">>
 ): Promise<Quotation | null> => {
   await new Promise(resolve => setTimeout(resolve, 300));
   const quotationIndex = quotationsStore.findIndex(q => q.id === id);
@@ -266,11 +265,10 @@ export const updateQuotation = async (
   
   let updatedQuotationData: Quotation = { 
     ...quotationsStore[quotationIndex], 
-    ...updates, 
+    ...updates, // This can include quotationNumber, notes, etc.
     updatedAt: new Date(),
   };
   
-  // Ensure company details are populated if companyId changed or for consistency
   const company = companiesStore.find(c => c.id === updatedQuotationData.companyId);
   updatedQuotationData.companyName = company?.name;
   updatedQuotationData.companyEmail = company?.contactEmail;
@@ -291,3 +289,4 @@ export const deleteQuotation = async (id: string): Promise<boolean> => {
   quotationsStore = quotationsStore.filter(q => q.id !== id);
   return quotationsStore.length < initialLength;
 };
+

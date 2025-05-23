@@ -13,7 +13,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-// import { Input } from "@/components/ui/input"; // Keep for totals display (not needed for individual items)
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -33,8 +34,9 @@ type QuotationFormValues = z.infer<typeof quotationSchema>;
 interface QuotationFormProps {
   quotation?: Quotation | null;
   companies: Company[];
-  formAction: (prevState: any, formData: FormData) => Promise<any>; // Server action
+  formAction: (prevState: any, formData: FormData) => Promise<any>;
   buttonText?: string;
+  defaultQuotationNumber?: string; // For new quotations
 }
 
 const initialState = {
@@ -43,7 +45,13 @@ const initialState = {
 };
 
 
-export function QuotationForm({ quotation, companies, formAction, buttonText = "Save Quotation" }: QuotationFormProps) {
+export function QuotationForm({ 
+  quotation, 
+  companies, 
+  formAction, 
+  buttonText = "Save Quotation",
+  defaultQuotationNumber 
+}: QuotationFormProps) {
   const [state, dispatch] = useActionState(formAction, initialState);
   const { toast } = useToast();
   
@@ -52,15 +60,17 @@ export function QuotationForm({ quotation, companies, formAction, buttonText = "
   const form = useForm<QuotationFormValues>({
     resolver: zodResolver(quotationSchema),
     defaultValues: {
+      quotationNumber: quotation?.quotationNumber || defaultQuotationNumber || "",
       companyId: quotation?.companyId || "",
       date: quotation?.date ? new Date(quotation.date) : new Date(),
       items: quotation?.items?.map(item => ({
         ...item, 
         quantity: Number(item.quantity), 
         unitPrice: Number(item.unitPrice),
-        unitType: item.unitType || undefined // Ensure unitType is handled correctly
+        unitType: item.unitType || undefined 
       })) || [{ id: crypto.randomUUID(), hsn: "", name: "", quantity: 1, unitPrice: 0, description: "", unitType: undefined }],
       status: quotation?.status || "draft",
+      notes: quotation?.notes || "",
     },
   });
 
@@ -72,13 +82,11 @@ export function QuotationForm({ quotation, companies, formAction, buttonText = "
   useEffect(() => {
     if (state?.message && !state.errors) {
       toast({ title: "Success", description: state.message });
-      // Optionally reset form or redirect here
     } else if (state?.message && state.errors) {
       toast({ title: "Error", description: state.message, variant: "destructive" });
        if (state.errors) {
         Object.entries(state.errors).forEach(([fieldName, fieldErrors]) => {
           if (Array.isArray(fieldErrors)) {
-            // @ts-ignore TODO: Fix this type error for fieldName
             form.setError(fieldName as keyof QuotationFormValues, {
               type: "manual",
               message: fieldErrors.join(", "),
@@ -92,18 +100,19 @@ export function QuotationForm({ quotation, companies, formAction, buttonText = "
   const processSubmit = async (data: QuotationFormValues) => {
     const formData = new FormData();
 
+    formData.append('quotationNumber', data.quotationNumber);
     formData.append('companyId', data.companyId);
     if (data.date) {
-        formData.append('date', data.date.toISOString()); // Send date as ISO string
+        formData.append('date', data.date.toISOString());
     }
     formData.append('status', data.status);
+    formData.append('notes', data.notes || '');
 
     data.items.forEach((item, index) => {
         formData.append(`items.${index}.id`, item.id || crypto.randomUUID());
         formData.append(`items.${index}.hsn`, item.hsn);
         formData.append(`items.${index}.name`, item.name);
         formData.append(`items.${index}.description`, item.description || '');
-        // formData.append(`items.${index}.imageUrl`, item.imageUrl || ''); // imageUrl removed from form
         formData.append(`items.${index}.quantity`, item.quantity.toString());
         formData.append(`items.${index}.unitType`, item.unitType || '');
         formData.append(`items.${index}.unitPrice`, item.unitPrice.toString());
@@ -116,13 +125,25 @@ export function QuotationForm({ quotation, companies, formAction, buttonText = "
   return (
     <Card className="max-w-4xl mx-auto shadow-lg">
       <CardHeader>
-        <CardTitle>{isEditing ? "Edit Quotation" : "Create New Quotation"}</CardTitle>
-        {!isEditing && <p className="text-sm text-muted-foreground">Quotation number will be auto-generated.</p>}
+        <CardTitle>{isEditing ? `Edit Quotation ${quotation?.quotationNumber}` : "Create New Quotation"}</CardTitle>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(processSubmit)} className="space-y-8">
           <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <FormField
+                control={form.control}
+                name="quotationNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Quotation Number</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., QTN-001" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="companyId"
@@ -185,7 +206,6 @@ export function QuotationForm({ quotation, companies, formAction, buttonText = "
             
             <input type="hidden" {...form.register("status")} />
 
-
             <div>
               <h3 className="text-lg font-semibold mb-2 block">Items</h3>
               <div className="space-y-4">
@@ -206,8 +226,24 @@ export function QuotationForm({ quotation, companies, formAction, buttonText = "
                 <FormMessage>{form.formState.errors.items.message}</FormMessage>
               )}
             </div>
-
-            {/* Removed Subtotal, Tax, and Grand Total section */}
+            
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Notes / Terms & Conditions</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Enter any notes, terms, or conditions for this quotation..."
+                      className="min-h-[100px]"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {state?.message && state.errors && Object.keys(state.errors).length === 0 && (
                 <p className="text-sm font-medium text-destructive">{state.message}</p>
@@ -226,3 +262,4 @@ export function QuotationForm({ quotation, companies, formAction, buttonText = "
     </Card>
   );
 }
+

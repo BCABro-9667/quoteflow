@@ -31,7 +31,7 @@ export default async function ViewQuotationPage({ params }: { params: { id: stri
   const clientCompany = await getCompanyById(quotation.companyId);
 
   const subTotal = quotation.items.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
-  const taxRate = 0.18; // Example tax rate
+  const taxRate = 0.18; // Example tax rate, consider making this configurable
   const taxAmount = subTotal * taxRate;
   const grandTotal = subTotal + taxAmount;
 
@@ -106,7 +106,7 @@ export default async function ViewQuotationPage({ params }: { params: { id: stri
                        {item.imageUrl && <Image src={item.imageUrl} alt={item.name} width={50} height={50} className="mt-1 rounded object-cover print:hidden" data-ai-hint="product small" />}
                     </td>
                     <td className="p-3 align-top hidden md:table-cell">{item.description || '-'}</td>
-                    <td className="p-3 align-top text-right">{item.quantity}</td>
+                    <td className="p-3 align-top text-right">{item.quantity}{item.unitType ? ` ${item.unitType}` : ''}</td>
                     <td className="p-3 align-top text-right">${item.unitPrice.toFixed(2)}</td>
                     <td className="p-3 align-top text-right">${(item.quantity * item.unitPrice).toFixed(2)}</td>
                   </tr>
@@ -151,3 +151,4 @@ export default async function ViewQuotationPage({ params }: { params: { id: stri
     </div>
   );
 }
+
