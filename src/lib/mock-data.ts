@@ -50,7 +50,6 @@ export const mockQuotations: Quotation[] = [
     id: "quot_1",
     quotationNumber: "QTN-2023-001",
     companyId: "comp_1",
-    companyName: "Innovatech Solutions Ltd.",
     date: new Date("2023-06-01T10:00:00Z"),
     validUntil: new Date("2023-07-01T10:00:00Z"),
     items: [mockProductItems[0], mockProductItems[3]],
@@ -63,7 +62,6 @@ export const mockQuotations: Quotation[] = [
     id: "quot_2",
     quotationNumber: "QTN-2023-002",
     companyId: "comp_2",
-    companyName: "Eco Builders Inc.",
     date: new Date("2023-06-15T14:00:00Z"),
     validUntil: new Date("2023-07-15T14:00:00Z"),
     items: [mockProductItems[1], mockProductItems[4]],
@@ -76,7 +74,6 @@ export const mockQuotations: Quotation[] = [
     id: "quot_3",
     quotationNumber: "QTN-2023-003",
     companyId: "comp_1",
-    companyName: "Innovatech Solutions Ltd.",
     date: new Date("2023-07-01T09:30:00Z"),
     validUntil: new Date("2023-08-01T09:30:00Z"),
     items: [mockProductItems[2]],
@@ -88,7 +85,7 @@ export const mockQuotations: Quotation[] = [
 
 // Helper functions to simulate a backend store
 let companiesStore = [...mockCompanies];
-let quotationsStore = [...mockQuotations.map(q => ({...q, companyName: companiesStore.find(c => c.id === q.companyId)?.name }))];
+let quotationsStore = [...mockQuotations];
 
 // My Company Settings Store
 let myCompanySettingsStore: MyCompanySettings = {
@@ -98,6 +95,15 @@ let myCompanySettingsStore: MyCompanySettings = {
   email: "support@quoteflow.example.com",
   phone: "+1-800-555-FLOW",
   logoUrl: "https://placehold.co/150x50.png?text=QuoteFlow",
+};
+
+const populateCompanyDetails = (quotation: Quotation): Quotation => {
+  const company = companiesStore.find(c => c.id === quotation.companyId);
+  return {
+    ...quotation,
+    companyName: company?.name,
+    companyEmail: company?.contactEmail,
+  };
 };
 
 export const getMyCompanySettings = async (): Promise<MyCompanySettings> => {
@@ -139,6 +145,8 @@ export const updateCompany = async (id: string, updates: Partial<Omit<Company, "
   const companyIndex = companiesStore.findIndex(c => c.id === id);
   if (companyIndex === -1) return null;
   companiesStore[companyIndex] = { ...companiesStore[companyIndex], ...updates, updatedAt: new Date() };
+  // Update company name and email in existing quotations if company details changed
+  quotationsStore = quotationsStore.map(q => q.companyId === id ? populateCompanyDetails(q) : q);
   return JSON.parse(JSON.stringify(companiesStore[companyIndex]));
 };
 
@@ -154,43 +162,43 @@ export const deleteCompany = async (id: string): Promise<boolean> => {
 
 export const getQuotations = async (): Promise<Quotation[]> => {
   await new Promise(resolve => setTimeout(resolve, 200));
-  return JSON.parse(JSON.stringify(quotationsStore.map(q => ({...q, companyName: companiesStore.find(c => c.id === q.companyId)?.name }))));
+  return JSON.parse(JSON.stringify(quotationsStore.map(populateCompanyDetails)));
 };
 
 export const getQuotationById = async (id: string): Promise<Quotation | undefined> => {
   await new Promise(resolve => setTimeout(resolve, 100));
   const quotation = quotationsStore.find(q => q.id === id);
   if (quotation) {
-    return JSON.parse(JSON.stringify({...quotation, companyName: companiesStore.find(c => c.id === quotation.companyId)?.name }));
+    return JSON.parse(JSON.stringify(populateCompanyDetails(quotation)));
   }
   return undefined;
 };
 
-export const addQuotation = async (quotationData: Omit<Quotation, "id" | "quotationNumber" | "createdAt" | "updatedAt" | "companyName">): Promise<Quotation> => {
+export const addQuotation = async (quotationData: Omit<Quotation, "id" | "quotationNumber" | "createdAt" | "updatedAt" | "companyName" | "companyEmail">): Promise<Quotation> => {
   await new Promise(resolve => setTimeout(resolve, 300));
-  const newQuotation: Quotation = {
+  let newQuotation: Quotation = {
     ...quotationData,
     id: `quot_${Date.now()}`,
     quotationNumber: `QTN-${new Date().getFullYear()}-${String(quotationsStore.length + 1).padStart(3, '0')}`,
     createdAt: new Date(),
     updatedAt: new Date(),
-    companyName: companiesStore.find(c => c.id === quotationData.companyId)?.name
   };
+  newQuotation = populateCompanyDetails(newQuotation);
   quotationsStore.push(newQuotation);
   return JSON.parse(JSON.stringify(newQuotation));
 };
 
-export const updateQuotation = async (id: string, updates: Partial<Omit<Quotation, "id" | "quotationNumber" | "createdAt" | "companyName">>): Promise<Quotation | null> => {
+export const updateQuotation = async (id: string, updates: Partial<Omit<Quotation, "id" | "quotationNumber" | "createdAt" | "companyName" | "companyEmail">>): Promise<Quotation | null> => {
   await new Promise(resolve => setTimeout(resolve, 300));
   const quotationIndex = quotationsStore.findIndex(q => q.id === id);
   if (quotationIndex === -1) return null;
   
-  const updatedQuotation = { 
+  let updatedQuotation = { 
     ...quotationsStore[quotationIndex], 
     ...updates, 
     updatedAt: new Date(),
-    companyName: updates.companyId ? companiesStore.find(c => c.id === updates.companyId)?.name : quotationsStore[quotationIndex].companyName
   };
+  updatedQuotation = populateCompanyDetails(updatedQuotation); // Repopulate company details if companyId changed or for consistency
   quotationsStore[quotationIndex] = updatedQuotation;
   return JSON.parse(JSON.stringify(updatedQuotation));
 };

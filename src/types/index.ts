@@ -27,6 +27,7 @@ export interface Quotation {
   quotationNumber: string; // Should be auto-generated or follow a pattern
   companyId: string; // Foreign key to Company
   companyName?: string; // Denormalized for display, populated on fetch
+  companyEmail?: string; // Denormalized for display
   date: Date;
   validUntil?: Date;
   items: ProductItem[];

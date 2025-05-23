@@ -3,9 +3,10 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import type { Company, Quotation, ProductItem } from "@/types";
+import type { Company, Quotation, ProductItem, MyCompanySettings } from "@/types";
 import * as mockApi from "./mock-data"; // Using mock API
 import { companySchema, companyUpdateSchema, quotationSchema, myCompanySettingsSchema } from "./schemas";
+import type { z } from "zod";
 
 // Company Actions
 export async function createCompanyAction(prevState: any, formData: FormData) {
@@ -64,6 +65,8 @@ export async function deleteCompanyAction(id: string) {
 
 
 // Quotation Actions
+type QuotationFormValues = z.infer<typeof quotationSchema>;
+
 export async function createQuotationAction(prevState: any, formData: FormData) {
   const rawData = Object.fromEntries(formData.entries());
   const items: ProductItem[] = [];
@@ -82,13 +85,13 @@ export async function createQuotationAction(prevState: any, formData: FormData) 
     });
   }
 
-  const dataToValidate = {
-    companyId: rawData.companyId,
-    date: rawData.date,
-    validUntil: rawData.validUntil || undefined,
+  const dataToValidate: Omit<QuotationFormValues, "companyName" | "companyEmail"> = { // Explicitly type what's being validated
+    companyId: rawData.companyId as string,
+    date: new Date(rawData.date as string),
+    validUntil: rawData.validUntil ? new Date(rawData.validUntil as string) : undefined,
     items: items,
-    notes: rawData.notes,
-    status: rawData.status,
+    notes: rawData.notes as string,
+    status: rawData.status as Quotation['status'],
   };
   
   const validatedFields = quotationSchema.safeParse(dataToValidate);
@@ -105,8 +108,13 @@ export async function createQuotationAction(prevState: any, formData: FormData) 
       ...item,
       id: item.id || crypto.randomUUID(),
     }));
+    // Cast validatedFields.data to match the expected type for addQuotation
+    const quotationPayload: Omit<Quotation, "id" | "quotationNumber" | "createdAt" | "updatedAt" | "companyName" | "companyEmail"> = {
+        ...validatedFields.data,
+        items: processedItems,
+    };
+    await mockApi.addQuotation(quotationPayload);
 
-    await mockApi.addQuotation({ ...validatedFields.data, items: processedItems });
   } catch (e) {
     return { message: "Failed to create quotation." };
   }
@@ -134,13 +142,13 @@ export async function updateQuotationAction(id: string, prevState: any, formData
     });
   }
   
-  const dataToValidate = {
-    companyId: rawData.companyId,
-    date: rawData.date,
-    validUntil: rawData.validUntil || undefined,
+  const dataToValidate: Omit<QuotationFormValues, "companyName" | "companyEmail"> = {
+    companyId: rawData.companyId as string,
+    date: new Date(rawData.date as string),
+    validUntil: rawData.validUntil ? new Date(rawData.validUntil as string) : undefined,
     items: items,
-    notes: rawData.notes,
-    status: rawData.status,
+    notes: rawData.notes as string,
+    status: rawData.status as Quotation['status'],
   };
 
   const validatedFields = quotationSchema.safeParse(dataToValidate);
@@ -157,7 +165,12 @@ export async function updateQuotationAction(id: string, prevState: any, formData
       ...item,
       id: item.id || crypto.randomUUID(),
     }));
-    await mockApi.updateQuotation(id, { ...validatedFields.data, items: processedItems });
+
+    const quotationPayload: Partial<Omit<Quotation, "id" | "quotationNumber" | "createdAt" | "companyName" | "companyEmail">> = {
+        ...validatedFields.data,
+        items: processedItems,
+    };
+    await mockApi.updateQuotation(id, quotationPayload);
   } catch (e) {
     return { message: "Failed to update quotation." };
   }
@@ -179,6 +192,25 @@ export async function deleteQuotationAction(id: string) {
     return { message: "Failed to delete quotation." };
   }
 }
+
+export async function toggleQuotationStatusAction(quotationId: string, currentStatus: Quotation['status']): Promise<{ message: string; error?: boolean }> {
+  if (currentStatus !== 'draft' && currentStatus !== 'sent') {
+    return { message: "Status can only be toggled if it is 'draft' or 'sent'.", error: true };
+  }
+
+  const newStatus = currentStatus === 'draft' ? 'sent' : 'draft';
+
+  try {
+    await mockApi.updateQuotation(quotationId, { status: newStatus });
+    revalidatePath("/quotations");
+    revalidatePath("/dashboard");
+    return { message: `Quotation status updated to ${newStatus}.` };
+  } catch (e) {
+    const errorMessage = e instanceof Error ? e.message : "Failed to update quotation status.";
+    return { message: errorMessage, error: true };
+  }
+}
+
 
 // My Company Settings Action
 export async function updateMyCompanySettingsAction(prevState: any, formData: FormData) {
