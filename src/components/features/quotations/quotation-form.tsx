@@ -27,8 +27,7 @@ import type { Company, Quotation, ProductItem as ProductItemType } from "@/types
 import { ProductItemRow } from "./product-item-row";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import Link from "next/link";
-import { useFormState } from "react-dom";
-import { useEffect, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 type QuotationFormValues = z.infer<typeof quotationSchema>;
@@ -47,7 +46,7 @@ const initialState = {
 
 
 export function QuotationForm({ quotation, companies, formAction, buttonText = "Save Quotation" }: QuotationFormProps) {
-  const [state, dispatch] = useFormState(formAction, initialState);
+  const [state, dispatch] = useActionState(formAction, initialState);
   const { toast } = useToast();
   
   const form = useForm<QuotationFormValues>({

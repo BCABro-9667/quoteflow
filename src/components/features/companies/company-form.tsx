@@ -20,8 +20,7 @@ import { companySchema } from "@/lib/schemas";
 import type { Company } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import Link from "next/link";
-import { useFormState } from "react-dom";
-import { useEffect } from "react";
+import { useActionState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 type CompanyFormValues = z.infer<typeof companySchema>;
@@ -38,7 +37,7 @@ const initialState = {
 };
 
 export function CompanyForm({ company, formAction, buttonText = "Save Company" }: CompanyFormProps) {
-  const [state, dispatch] = useFormState(formAction, initialState);
+  const [state, dispatch] = useActionState(formAction, initialState);
   const { toast } = useToast();
 
   const form = useForm<CompanyFormValues>({

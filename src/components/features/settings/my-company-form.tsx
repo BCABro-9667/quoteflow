@@ -19,8 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { myCompanySettingsSchema } from "@/lib/schemas";
 import type { MyCompanySettings } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { useFormState } from "react-dom";
-import { useEffect } from "react";
+import { useActionState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 
@@ -37,7 +36,7 @@ const initialState = {
 };
 
 export function MyCompanyForm({ settings, formAction }: MyCompanyFormProps) {
-  const [state, dispatch] = useFormState(formAction, initialState);
+  const [state, dispatch] = useActionState(formAction, initialState);
   const { toast } = useToast();
 
   const form = useForm<MyCompanyFormValues>({
